@@ -1,3 +1,5 @@
+<p align="center"><code>φ(・・;</code></p>
+
 # inapparency
 
 > make the inapparent apparent.
@@ -44,6 +46,9 @@ It's defensive and passive. It listens, it doesn't transmit.
   allocation while processing frames.
 - **Firmware** for ESP32 / S3 / C3 / C6: passive capture, channel hopping,
   text or JSON output over serial ([docs](docs/firmware.md))
+- **Optional OLED screen** (SSD1306 / SH1106) with live status and the last
+  alert, and **optional SD card logging** with rotation. Both off by
+  default, and if one fails monitoring keeps going ([wiring](docs/modules.md))
 - **Replay tool**: run any monitor-mode `.pcap` through the same detector on
   your laptop
 - Builds and tests on any machine with CMake and a C++20 compiler. No board
@@ -93,10 +98,12 @@ More in [docs/development.md](docs/development.md).
 ```
 core/              portable C++ core, no hardware or SDK code in here
 modules/serial/    event and status formatting (text / JSON lines)
-platform/espidf/   ESP-IDF radio adapter
+modules/display/   framebuffer, font, logo and OLED screen layouts
+modules/storage/   rotating JSON-lines event log
+platform/espidf/   ESP-IDF radio, OLED and SD card drivers
 platform/host/     pcap + radiotap reader for laptops
 firmware/          ESP-IDF project tying it together
-tools/             replay tool and demo capture generator
+tools/             replay tool, demo capture generator, OLED preview
 tests/             host tests and the synthetic frame builder
 docs/              rules, firmware, hardware status, limitations
 ```
@@ -111,10 +118,12 @@ docs/              rules, firmware, hardware status, limitations
 4. **Reliability**: dedup, rate limiting, bounded everything ✓
    (10-minute soak test under hostile traffic)
 5. **More boards**: S3, C3, C6, and maybe C5 for 5 GHz (needs real boards)
-6. **Optional modules**: storage, display, export ← *next*
+6. **Optional modules**: SD logging, OLED display ✓ (compiles, waiting on
+   real hardware)
 7. **Smarter detection**: AP change tracking, evil twins, auth floods,
    correlating rules ✓ (learned baselines still to do)
-8. **Public release**
+8. **Public release** ← *next*, plus learned baselines and probe-response
+   twins whenever
 
 ## Limitations
 

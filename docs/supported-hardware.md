@@ -18,12 +18,14 @@ ESP-IDF v5.4.1. CI builds all four on every push.
 
 Measured from the v0.1 firmware with default settings:
 
-| Chip | App binary | Static RAM used |
-|---|---|---|
-| ESP32 | 533 KB | 74 KB of 177 KB DRAM |
-| ESP32-S3 | 526 KB | 139 KB of 334 KB |
-| ESP32-C3 | 541 KB | 140 KB of 314 KB |
-| ESP32-C6 | 577 KB | 172 KB of 442 KB |
+| Chip | App binary | With OLED + SD | Static RAM used (base) |
+|---|---|---|---|
+| ESP32 | 534 KB | 634 KB | 74 KB of 177 KB DRAM |
+| ESP32-S3 | 526 KB | 630 KB | 139 KB of 334 KB |
+| ESP32-C3 | 542 KB | 654 KB | 140 KB of 314 KB |
+| ESP32-C6 | 577 KB | 681 KB | 172 KB of 442 KB |
+
+All fit the default 1 MB app partition with room to spare.
 
 Most of that is the Wi-Fi driver. inapparency itself takes about 45 KB of
 RAM: the capture queue (~17 KB), the five rules (~24 KB) and the detector,
@@ -40,3 +42,6 @@ These are written from the ESP-IDF docs and need confirming on a board:
   be fine; it's sending raw deauths that ESP-IDF blocks)
 - How many frames per second each chip handles before the queue drops some
 - Free heap stays flat over a day of running
+- The OLED shows the splash and status on both SSD1306 and SH1106 modules
+- The SD card mounts, `inapp.log` rotates, and pulling power mid-write
+  loses at most one line

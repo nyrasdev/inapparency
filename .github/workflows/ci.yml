@@ -63,7 +63,15 @@ jobs:
         target: [esp32, esp32s3, esp32c3, esp32c6]
     steps:
       - uses: actions/checkout@v4
-      - name: build
+      - name: build (with display and SD card)
+        shell: bash
+        working-directory: firmware
+        run: |
+          . "$IDF_PATH/export.sh"
+          idf.py -B build-full -D SDKCONFIG=build-full/sdkconfig \
+            -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.ci.full" \
+            set-target ${{ matrix.target }} build
+      - name: build (base)
         shell: bash
         working-directory: firmware
         run: |

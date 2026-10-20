@@ -30,6 +30,8 @@ Under **inapparency** in `idf.py menuconfig`:
 | Time on each channel | 500 ms | |
 | Status interval | 30 s | 0 turns status lines off |
 | Output format | text | or JSON lines |
+| OLED display | off | see [modules.md](modules.md) |
+| Log alerts to a microSD card | off | see [modules.md](modules.md) |
 
 A fixed channel is the better choice whenever you know which network you
 care about. While hopping, each channel is only heard part of the time, so
@@ -38,7 +40,10 @@ bursts get undercounted.
 ## What it prints
 
 ```
-inapparency 0.1.0 | target esp32 rev 3 | 2 core(s) | esp-idf v5.4.1
+
+  φ(・・;  inapparency 0.1.0
+
+target esp32 rev 3 | 2 core(s) | esp-idf v5.4.1 | boot #12
 passive mode: listening only, nothing is transmitted
 rules: deauth-burst, malformed-frames, ap-change, evil-twin, auth-flood + attack-chain
 channel: hopping 1,6,11 every 500 ms (33% coverage each)
@@ -67,7 +72,15 @@ CaptureRing (32 × 512 B)
                            (the only task touching the detector, no locks)
 
 main task                  channel hopper, moves the radio every N ms
+
+"display" task (optional)  redraws the OLED every 500 ms from a snapshot
+"storage" task (optional)  writes queued alerts to the SD card
 ```
+
+The detection task never waits on a module. It hands the display a copy of
+its counters every 250 ms and the storage task a queue of alerts. When that
+queue is full, the alert is still printed on serial and only the log copy
+is dropped.
 
 Everything is allocated statically at boot. Nothing in the frame path uses
 the heap.
