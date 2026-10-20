@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: clang-format
+        run: |
+          clang-format-18 --version
+          find core tests -name '*.cpp' -o -name '*.hpp' \
+            | xargs clang-format-18 --dry-run --Werror
+
+  host:
+    name: host (${{ matrix.compiler }}, ${{ matrix.build_type }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [g++, clang++]
+        build_type: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+          -DINAPPARENCY_WERROR=ON
+      - name: build
+        run: cmake --build build -j
+      - name: test
+        run: ctest --test-dir build --output-on-failure
+
+  sanitizers:
+    name: host (asan + ubsan)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_COMPILER=clang++
+          -DINAPPARENCY_WERROR=ON
+          -DINAPPARENCY_SANITIZE=ON
+      - name: build
+        run: cmake --build build -j
+      - name: test
+        run: ctest --test-dir build --output-on-failure
+
+  # ESP-IDF cross builds get added in phase 3, once there is firmware to build.
