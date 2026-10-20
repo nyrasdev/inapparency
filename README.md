@@ -9,9 +9,9 @@ tells you when something looks off and *why* it thinks so.
 It's defensive and passive. It listens, it doesn't transmit.
 
 > [!NOTE]
-> Early days. Right now this is the portable core: the frame parser and the
-> data types the rest of the system builds on. No detection rules or firmware
-> yet. See the [roadmap](#roadmap).
+> Early days. The portable core and the first detection rules work and are
+> tested on synthetic traffic. There's no firmware yet, so nothing has been
+> checked against a real radio. See the [roadmap](#roadmap).
 
 ## What works today
 
@@ -23,6 +23,14 @@ It's defensive and passive. It listens, it doesn't transmit.
 - Handles truncated, malformed and protected frames without crashing or
   reading out of bounds (tested with every prefix, single-byte mutations and
   ~40k random buffers under ASan/UBSan)
+- **Two detection rules** ([details](docs/detection-rules.md)):
+  - `deauth-burst`: deauth/disassoc floods per network, with confidence
+    based on PMF, spread and reason codes
+  - `malformed-frames`: floods of broken management frames
+- Every alert says why it fired, how much evidence there was, and keeps
+  severity separate from confidence
+- Fixed memory. The whole detector is about 11 KB, with no allocation while
+  processing frames.
 - Builds and tests on any machine with CMake and a C++20 compiler. No board
   needed.
 
@@ -56,10 +64,10 @@ there's something real to put in them.
 
 ## Roadmap
 
-1. **Foundation**: types, parser, tests, CI ← *here*
+1. **Foundation**: types, parser, tests, CI ✓
 2. **Detection MVP**: rolling windows, deauth/disassoc bursts, malformed frames,
-   structured events
-3. **First ESP32 adapter**: ESP-IDF, promiscuous capture, serial output
+   structured events ✓
+3. **First ESP32 adapter**: ESP-IDF, promiscuous capture, serial output ← *next*
 4. **Reliability**: dedup, rate limiting, bounded everything
 5. **More boards**: S3, C3, C6, and maybe C5 for 5 GHz
 6. **Optional modules**: storage, display, export

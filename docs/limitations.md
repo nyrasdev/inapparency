@@ -22,6 +22,15 @@ here so nobody mistakes it for more than it is.
   codes can't be read. That's expected, not an error.
 - The FCS (checksum) is stripped but not verified.
 
+## Detection
+
+- Thresholds are fixed numbers for now, not learned from your environment. A
+  busy office and an empty house get the same defaults.
+- Rules track a limited number of networks (16 for deauth bursts, 32 for
+  learned PMF state). In very crowded places older ones get replaced.
+- PMF status comes from beacons. Until a network's beacon is heard, its PMF
+  status is unknown and alerts say so.
+
 ## Conclusions
 
 - No alerts doesn't mean nothing happened.
