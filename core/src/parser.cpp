@@ -10,7 +10,11 @@ constexpr std::size_t kFrameControlLength = 2;
 constexpr std::size_t kManagementHeaderLength = 24;
 constexpr std::size_t kHtControlLength = 4;
 constexpr std::size_t kReasonCodeLength = 2;
-constexpr std::size_t kBeaconFixedLength = 12; // timestamp, interval, capability
+constexpr std::size_t kBeaconFixedLength = 12;         // timestamp, interval, capability
+constexpr std::size_t kAuthFixedLength = 6;            // algorithm, sequence, status
+constexpr std::size_t kAssocRequestFixedLength = 4;    // capability, listen interval
+constexpr std::size_t kReassocRequestFixedLength = 10; // + current AP
+constexpr std::size_t kAssocResponseFixedLength = 6;   // capability, status, AID
 
 constexpr std::uint8_t kElementSsid = 0;
 constexpr std::uint8_t kElementDsParameterSet = 3;
@@ -256,6 +260,55 @@ ParseResult parse_frame(const Observation& observation) {
         break;
     case ManagementSubtype::ProbeRequest:
         parse_elements(body, info);
+        break;
+    case ManagementSubtype::Authentication:
+        if (body.size() < kAuthFixedLength) {
+            result.status = ParseStatus::Truncated;
+            return result;
+        }
+        info.auth_algorithm = read_le16(body, 0);
+        info.auth_sequence = read_le16(body, 2);
+        info.status_code = read_le16(body, 4);
+        // What follows depends on the algorithm (SAE carries its own data,
+        // not elements), so it's left alone.
+        break;
+    case ManagementSubtype::AssociationRequest:
+        if (body.size() < kAssocRequestFixedLength) {
+            result.status = ParseStatus::Truncated;
+            return result;
+        }
+        info.capability_info = read_le16(body, 0);
+        info.listen_interval = read_le16(body, 2);
+        parse_elements(body.subspan(kAssocRequestFixedLength), info);
+        break;
+    case ManagementSubtype::ReassociationRequest:
+        if (body.size() < kReassocRequestFixedLength) {
+            result.status = ParseStatus::Truncated;
+            return result;
+        }
+        info.capability_info = read_le16(body, 0);
+        info.listen_interval = read_le16(body, 2);
+        info.current_ap = read_mac(body, 4);
+        parse_elements(body.subspan(kReassocRequestFixedLength), info);
+        break;
+    case ManagementSubtype::AssociationResponse:
+    case ManagementSubtype::ReassociationResponse:
+        if (body.size() < kAssocResponseFixedLength) {
+            result.status = ParseStatus::Truncated;
+            return result;
+        }
+        info.capability_info = read_le16(body, 0);
+        info.status_code = read_le16(body, 2);
+        info.association_id = static_cast<std::uint16_t>(read_le16(body, 4) & 0x3FFFU);
+        parse_elements(body.subspan(kAssocResponseFixedLength), info);
+        break;
+    case ManagementSubtype::Action:
+    case ManagementSubtype::ActionNoAck:
+        if (body.empty()) {
+            result.status = ParseStatus::Truncated;
+            return result;
+        }
+        info.action_category = body[0];
         break;
     default:
         break;

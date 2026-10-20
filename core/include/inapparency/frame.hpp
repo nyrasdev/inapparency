@@ -94,6 +94,13 @@ inline constexpr std::uint8_t sae = 8;
 // because frames often leave things out, and protected frames hide them.
 struct ManagementInfo {
     std::optional<std::uint16_t> reason_code; // deauth / disassoc
+    std::optional<std::uint16_t> status_code; // authentication, (re)assoc response
+    std::optional<std::uint16_t> auth_algorithm;
+    std::optional<std::uint16_t> auth_sequence;
+    std::optional<std::uint16_t> listen_interval; // (re)assoc request
+    std::optional<std::uint16_t> association_id;  // (re)assoc response, 1-2007
+    std::optional<MacAddress> current_ap;         // reassoc request
+    std::optional<std::uint8_t> action_category;
     std::optional<std::uint16_t> beacon_interval;
     std::optional<std::uint16_t> capability_info;
     std::optional<Ssid> ssid;
