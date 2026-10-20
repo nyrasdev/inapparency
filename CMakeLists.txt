@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(INAPPARENCY_BUILD_TESTS "Build the host test suite" ${PROJECT_IS_TOP_LEVEL})
+option(INAPPARENCY_BUILD_TOOLS "Build the host replay tool" ${PROJECT_IS_TOP_LEVEL})
 option(INAPPARENCY_WERROR "Treat warnings as errors" OFF)
 option(INAPPARENCY_SANITIZE "Build with AddressSanitizer and UBSan" OFF)
 
@@ -25,6 +26,14 @@ if(INAPPARENCY_SANITIZE)
 endif()
 
 add_subdirectory(core)
+add_subdirectory(modules/serial)
+
+if(INAPPARENCY_BUILD_TOOLS OR INAPPARENCY_BUILD_TESTS)
+    add_subdirectory(platform/host)
+endif()
+if(INAPPARENCY_BUILD_TOOLS)
+    add_subdirectory(tools/replay)
+endif()
 
 if(INAPPARENCY_BUILD_TESTS)
     enable_testing()
