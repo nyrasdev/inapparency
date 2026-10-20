@@ -57,7 +57,10 @@ here so nobody mistakes it for more than it is.
 
 - No alerts doesn't mean nothing happened.
 - Two access points with the same name aren't proof of an evil twin. Mesh
-  systems and roaming do that all the time.
+  systems and roaming do that all the time. `evil-twin` only fires on a
+  security gap, so a twin that copies the security exactly isn't caught yet.
+- An `attack-chain` is two observations that fit an attack pattern, not
+  proof of an attacker.
 - Lots of deauths can come from normal roaming, band steering or a rebooting
   access point.
 - Probe requests are normal. Phones send them constantly.

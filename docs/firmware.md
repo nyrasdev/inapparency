@@ -40,7 +40,7 @@ bursts get undercounted.
 ```
 inapparency 0.1.0 | target esp32 rev 3 | 2 core(s) | esp-idf v5.4.1
 passive mode: listening only, nothing is transmitted
-rules: deauth-burst, malformed-frames
+rules: deauth-burst, malformed-frames, ap-change, evil-twin, auth-flood + attack-chain
 channel: hopping 1,6,11 every 500 ms (33% coverage each)
 monitoring started
 [30.000] status frames=2841 ok=2830 ... dropped=0 queue_peak=3 ch=6 heap=187420 heap_min=186904 stack_free=3120 suppressed=0
@@ -62,12 +62,12 @@ Wi-Fi driver task          capture callback copies the frame into a ring
 CaptureRing (32 × 512 B)
         │
         ▼
-"detect" task              parse → learn networks → rules → serial lines
+"detect" task              parse → learn networks → rules → correlator →
+                           event gate → serial lines
                            (the only task touching the detector, no locks)
 
 main task                  channel hopper, moves the radio every N ms
 ```
 
-Events go through the event gate (dedup + rate limit) before being printed.
 Everything is allocated statically at boot. Nothing in the frame path uses
 the heap.

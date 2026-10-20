@@ -23,18 +23,25 @@ It's defensive and passive. It listens, it doesn't transmit.
 - Handles truncated, malformed and protected frames without crashing or
   reading out of bounds (tested with every prefix, single-byte mutations and
   ~40k random buffers under ASan/UBSan)
-- **Two detection rules** ([details](docs/detection-rules.md)):
+- **Five detection rules + attack chains** ([details](docs/detection-rules.md)):
   - `deauth-burst`: deauth/disassoc floods per network, with confidence
     based on PMF, spread and reason codes
+  - `evil-twin`: a copy of a network with weaker security (open copy of a
+    WPA3 network, say)
+  - `ap-change`: an access point whose beacons change, or two transmitters
+    sharing one BSSID
+  - `auth-flood`: join floods meant to fill an AP's client table
   - `malformed-frames`: floods of broken management frames
+  - `attack-chain`: evil twin + deauth flood against the real AP, the way
+    these attacks are actually run
 - Every alert says why it fired, how much evidence there was, and keeps
   severity separate from confidence
 - Alerts get deduplicated and rate-limited, and anything held back is
   counted. Thresholds adjust while channel hopping.
 - Parses all management frame types (beacons, probes, auth, association,
   deauth, action)
-- Fixed memory. The whole detector is about 11 KB, with no allocation while
-  processing frames.
+- Fixed memory. The whole detector with all rules is about 28 KB, with no
+  allocation while processing frames.
 - **Firmware** for ESP32 / S3 / C3 / C6: passive capture, channel hopping,
   text or JSON output over serial ([docs](docs/firmware.md))
 - **Replay tool**: run any monitor-mode `.pcap` through the same detector on
@@ -51,12 +58,16 @@ python3 tools/make_demo_pcap.py demo.pcap
 ```
 
 ```
-[60.190] HIGH deauth-burst confidence=75 evidence=20/5000ms bssid=02:10:10:10:10:10 ch=6 | Unprotected deauth/disassoc burst on a network that requires PMF. The real access point would protect these, so they are likely forged.
-[70.450] LOW malformed-frames confidence=30 evidence=10/10000ms ch=6 | Lots of malformed or invalid frames in a short time. Could be a fuzzing tool, a buggy device or heavy interference.
+[55.250] HIGH evil-twin confidence=85 ... bssid=02:ee:ee:ee:ee:01 related=02:10:10:10:10:10 | A new access point appeared with the same name as a protected network, but open. ...
+[60.190] HIGH deauth-burst confidence=75 ... bssid=02:10:10:10:10:10 | Unprotected deauth/disassoc burst on a network that requires PMF. ...
+[60.190] CRITICAL attack-chain confidence=95 ... | Deauth burst against an access point while an impostor of it is on the air. ...
+[70.450] LOW malformed-frames confidence=30 ...
+[80.490] MEDIUM auth-flood confidence=55 ... bssid=02:20:20:20:20:20 | Lots of authentication/association requests ...
 ```
 
-The demo is a synthetic minute of normal apartment traffic, then a forged
-deauth flood and some broken frames. It also works with real captures: any
+The demo is a synthetic minute of normal apartment traffic, then a full
+evil twin attack (open copy of the WPA3 network + deauth flood against the
+real one), some broken frames and an auth flood. It also works with real captures: any
 Wi-Fi adapter that supports monitor mode plus `tcpdump` or Wireshark, saved
 as classic `.pcap`. Only capture networks you're allowed to.
 
@@ -101,7 +112,8 @@ docs/              rules, firmware, hardware status, limitations
    (10-minute soak test under hostile traffic)
 5. **More boards**: S3, C3, C6, and maybe C5 for 5 GHz (needs real boards)
 6. **Optional modules**: storage, display, export ← *next*
-7. **Smarter detection**: baselines, AP change tracking, correlating rules
+7. **Smarter detection**: AP change tracking, evil twins, auth floods,
+   correlating rules ✓ (learned baselines still to do)
 8. **Public release**
 
 ## Limitations
