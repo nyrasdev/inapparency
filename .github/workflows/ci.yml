@@ -8,7 +8,7 @@ jobs:
   format:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: clang-format
         run: |
           clang-format-18 --version
@@ -24,7 +24,7 @@ jobs:
         compiler: [g++, clang++]
         build_type: [Debug, Release]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: configure
         run: >
           cmake -S . -B build
@@ -40,7 +40,7 @@ jobs:
     name: host (asan + ubsan)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: configure
         run: >
           cmake -S . -B build
@@ -62,7 +62,7 @@ jobs:
       matrix:
         target: [esp32, esp32s3, esp32c3, esp32c6]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: build (with display and SD card)
         shell: bash
         working-directory: firmware
@@ -79,7 +79,7 @@ jobs:
           idf.py set-target ${{ matrix.target }} build
           idf.py size
       - name: upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: inapparency-${{ matrix.target }}
           path: |

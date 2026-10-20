@@ -16,7 +16,7 @@ jobs:
   check:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: tag matches VERSION
         if: github.event_name == 'push'
         run: |
@@ -44,7 +44,7 @@ jobs:
         target: [esp32, esp32s3, esp32c3, esp32c6]
         flavor: [base, full]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: build
         shell: bash
         working-directory: firmware
@@ -63,7 +63,7 @@ jobs:
           if [ "${{ matrix.flavor }}" = full ]; then name="$name-oled-sd"; fi
           esptool.py --chip ${{ matrix.target }} merge_bin -o "$name.bin" @flash_args
           mkdir -p ../../dist && mv "$name.bin" ../../dist/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: firmware-${{ matrix.target }}-${{ matrix.flavor }}
           path: dist/*.bin
@@ -72,7 +72,7 @@ jobs:
     needs: check
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: build and test
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DINAPPARENCY_WERROR=ON
@@ -86,7 +86,7 @@ jobs:
              build/tools/display_preview/inapparency-display-preview \
              tools/make_demo_pcap.py LICENSE "$name/"
           tar czf "dist/$name.tar.gz" "$name"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: tools
           path: dist/*.tar.gz
@@ -95,8 +95,8 @@ jobs:
     needs: [firmware, tools]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v7
         with:
           path: dist
           merge-multiple: true
