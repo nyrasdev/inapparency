@@ -2,6 +2,7 @@ set(INAPPARENCY_CORE_SOURCES
     src/frame.cpp
     src/parser.cpp
     src/detector.cpp
+    src/channel_hopper.cpp
     src/rules/deauth_burst.cpp
     src/rules/malformed_frames.cpp
 )
