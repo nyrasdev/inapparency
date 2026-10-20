@@ -8,6 +8,7 @@ set(INAPPARENCY_CORE_SOURCES
     src/rules/deauth_burst.cpp
     src/rules/malformed_frames.cpp
     src/rules/ap_change.cpp
+    src/rules/evil_twin.cpp
 )
 
 # Inside an ESP-IDF build the core is pulled in as a regular component.
