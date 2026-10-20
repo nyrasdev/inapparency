@@ -14,13 +14,20 @@ Any 128x64 I2C OLED: the common 0.96" (SSD1306) or 1.3" (SH1106) modules.
 
 ![OLED screens](images/oled-screens.png)
 
-- **Splash** for 2 s at boot, with the logo
+- **Splash** at boot: the logo for 1.5 s, then the name and version
 - **Status**: channel, uptime, frames seen, frames dropped, alerts,
   alerts held back by the rate limit
 - **Last alert**: severity, rule, confidence and BSSID. High and critical
   alerts are shown inverted for 10 s so they stand out across the room.
 - The `SD` marker in the header turns inverted when the card is missing or
   failing
+
+The splash logo is generated from `assets/` by `tools/make_logo.py`, which
+takes the braille art or any picture and fits it to the screen:
+
+```sh
+python3 tools/make_logo.py assets/protogen-braille.txt
+```
 
 Check layouts on a laptop without a screen:
 

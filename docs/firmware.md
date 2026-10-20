@@ -16,8 +16,20 @@ idf.py build
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
 
-No ESP-IDF installed? Every CI run uploads ready-made binaries for each chip
-as artifacts. Flash them with `esptool.py` using the included `flash_args`.
+## Flash a release without building
+
+Every [release](https://github.com/nyrasdev/inapparency/releases) has one
+complete image per chip. Flash it at offset 0:
+
+```sh
+pip install esptool
+esptool.py --chip esp32 write_flash 0x0 inapparency-v0.1.0-esp32.bin
+```
+
+Or from the browser: open https://espressif.github.io/esptool-js/, connect,
+and flash the `.bin` at `0x0`. The `-oled-sd` images have the display and SD
+card switched on with the default pins from [modules.md](modules.md); the
+others are serial only. Then open any serial monitor at 115200 baud.
 
 ## Settings
 
@@ -40,8 +52,9 @@ bursts get undercounted.
 ## What it prints
 
 ```
-
-  φ(・・;  inapparency 0.1.0
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⡠⠊⠀⠀⠀⠀⠀⠀⠀⠀⢀⠐⡩⠄⠒⠋⠱⠳⡀⠈⣆⠀ ...
+   (the logo, 30 lines of braille art)
+  inapparency 0.1.0
 
 target esp32 rev 3 | 2 core(s) | esp-idf v5.4.1 | boot #12
 passive mode: listening only, nothing is transmitted

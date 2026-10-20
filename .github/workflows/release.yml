@@ -1,0 +1,118 @@
+name: release
+
+# Push a tag like v0.1.0 to build everything and publish a GitHub release.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: tag matches VERSION
+        run: |
+          want="v$(head -n1 VERSION)"
+          if [ "$GITHUB_REF_NAME" != "$want" ]; then
+            echo "tag $GITHUB_REF_NAME doesn't match VERSION ($want)"; exit 1
+          fi
+      - name: changelog has this version
+        run: grep -q "^## $(head -n1 VERSION)$" CHANGELOG.md
+
+  firmware:
+    needs: check
+    name: firmware (${{ matrix.target }}, ${{ matrix.flavor }})
+    runs-on: ubuntu-24.04
+    container: espressif/idf:v5.4.1
+    strategy:
+      fail-fast: true
+      matrix:
+        target: [esp32, esp32s3, esp32c3, esp32c6]
+        flavor: [base, full]
+    steps:
+      - uses: actions/checkout@v4
+      - name: build
+        shell: bash
+        working-directory: firmware
+        run: |
+          . "$IDF_PATH/export.sh"
+          defaults="sdkconfig.defaults"
+          if [ "${{ matrix.flavor }}" = full ]; then defaults="$defaults;sdkconfig.ci.full"; fi
+          idf.py -B out -D SDKCONFIG=out/sdkconfig -D SDKCONFIG_DEFAULTS="$defaults" \
+            set-target ${{ matrix.target }} build
+      - name: merge into one image
+        shell: bash
+        working-directory: firmware/out
+        run: |
+          . "$IDF_PATH/export.sh"
+          name="inapparency-${GITHUB_REF_NAME}-${{ matrix.target }}"
+          if [ "${{ matrix.flavor }}" = full ]; then name="$name-oled-sd"; fi
+          esptool.py --chip ${{ matrix.target }} merge_bin -o "$name.bin" @flash_args
+          mkdir -p ../../dist && mv "$name.bin" ../../dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.target }}-${{ matrix.flavor }}
+          path: dist/*.bin
+
+  tools:
+    needs: check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: build and test
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DINAPPARENCY_WERROR=ON
+          cmake --build build -j
+          ctest --test-dir build --output-on-failure
+      - name: package
+        run: |
+          name="inapparency-tools-${GITHUB_REF_NAME}-linux-x86_64"
+          mkdir -p "$name" dist
+          cp build/tools/replay/inapparency-replay \
+             build/tools/display_preview/inapparency-display-preview \
+             tools/make_demo_pcap.py LICENSE "$name/"
+          tar czf "dist/$name.tar.gz" "$name"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tools
+          path: dist/*.tar.gz
+
+  publish:
+    needs: [firmware, tools]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: checksums
+        run: cd dist && sha256sum * > SHA256SUMS
+      - name: release notes from the changelog
+        run: |
+          version="$(head -n1 VERSION)"
+          awk -v v="## $version" '$0==v{on=1;next} /^## /{on=0} on' CHANGELOG.md > notes.md
+          cat >> notes.md <<'EOF'
+
+          ## Flashing
+
+          Each `.bin` is a complete image, flash it at offset 0:
+
+          ```sh
+          esptool.py --chip esp32 write_flash 0x0 inapparency-<version>-esp32.bin
+          ```
+
+          Or from the browser with https://espressif.github.io/esptool-js/ (offset 0x0).
+          The `-oled-sd` builds have the display and SD card modules switched on with
+          the default pins from docs/modules.md.
+          EOF
+      - name: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Marked as a pre-release until it has been tested on real boards.
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "inapparency $GITHUB_REF_NAME" --notes-file notes.md --prerelease

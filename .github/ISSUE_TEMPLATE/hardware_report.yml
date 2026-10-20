@@ -1,0 +1,52 @@
+name: Hardware report
+description: Ran it on a real board? Tell us how it went, good or bad.
+labels: [hardware]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every report helps fill in docs/supported-hardware.md. "It just
+        worked" is useful too.
+  - type: dropdown
+    id: chip
+    attributes:
+      label: Chip
+      options: [ESP32, ESP32-S3, ESP32-C3, ESP32-C6, Other]
+    validations:
+      required: true
+  - type: input
+    id: board
+    attributes:
+      label: Board
+      placeholder: "e.g. ESP32-S3-DevKitC-1, generic C3 super mini"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+    validations:
+      required: true
+  - type: checkboxes
+    id: works
+    attributes:
+      label: What worked
+      options:
+        - label: Boots and prints the banner
+        - label: Frames counted in the status line go up
+        - label: Channel hopping (status line shows the channel changing)
+        - label: Got an alert from a known test (your own network only)
+        - label: OLED display
+        - label: SD card logging
+        - label: Ran for 24 h+ without dropped frames or heap shrinking
+  - type: textarea
+    id: status
+    attributes:
+      label: Status lines
+      description: A few status lines from the serial monitor, ideally a few hours apart.
+      render: text
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Wiring, settings you changed, surprises.

@@ -1,0 +1,26 @@
+name: Detection idea
+description: Suggest something inapparency should notice, or a false positive to fix
+labels: [detection]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should it notice (or stop flagging)?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence in the air
+      description: Which frames or fields show it? What does normal traffic look like next to it?
+    validations:
+      required: true
+  - type: textarea
+    id: false-positives
+    attributes:
+      label: What could look the same but be harmless?
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Papers, write-ups, standards sections.
