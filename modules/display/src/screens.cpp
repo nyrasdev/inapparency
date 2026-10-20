@@ -74,28 +74,41 @@ std::array<char, 16> format_uptime(std::uint64_t ms) {
     return out;
 }
 
-void render_splash(Framebuffer& fb, const char* version) {
+void render_splash_logo(Framebuffer& fb) {
     fb.clear();
-    centered(fb, 8, kLogo, 3); // 90 x 21 px
-    centered(fb, 38, "inapparency");
+    const Bitmap& logo = kLogoBitmap;
+    const int x0 = (kW - logo.width) / 2;
+    const int y0 = (Framebuffer::kHeight - logo.height) / 2;
+    for (int y = 0; y < logo.height; ++y) {
+        for (int x = 0; x < logo.width; ++x) {
+            if (logo.get(x, y)) {
+                fb.set(x0 + x, y0 + y);
+            }
+        }
+    }
+}
+
+void render_splash_name(Framebuffer& fb, const char* version) {
+    fb.clear();
+    centered(fb, 18, "inapparency", 1);
     char line[24];
-    std::snprintf(line, sizeof line, "v%s  passive", version);
-    centered(fb, 52, line);
+    std::snprintf(line, sizeof line, "v%s", version);
+    centered(fb, 32, line);
+    centered(fb, 46, "passive monitor");
 }
 
 void render_status(Framebuffer& fb, const StatusView& v) {
     fb.clear();
     char line[24];
 
-    // Header: name, storage marker, logo.
+    // Header: name, storage marker on the right.
     fb.draw_text(0, 0, "inapparency");
     if (v.storage_enabled) {
-        fb.draw_text(72, 0, "SD");
+        right(fb, 0, "SD");
         if (!v.storage_ok) {
-            fb.invert_rect(71, 0, 13, 8); // inverted = card missing or failing
+            fb.invert_rect(kW - 14, 0, 14, 8); // inverted = card missing or failing
         }
     }
-    right(fb, 0, kLogo);
     fb.hline(0, 9, kW);
 
     if (v.channel) {

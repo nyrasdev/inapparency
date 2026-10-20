@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <type_traits>
 
+#include "banner.hpp"
 #include "esp_chip_info.h"
 #include "esp_heap_caps.h"
 #include "esp_idf_version.h"
@@ -20,6 +21,7 @@
 #include "inapparency/fanout.hpp"
 #include "inapparency/platform/capture.hpp"
 #include "inapparency/serial/format.hpp"
+#include "inapparency/version.hpp"
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
@@ -35,8 +37,6 @@
 namespace {
 
 using namespace inapparency;
-
-constexpr const char* kVersion = "0.1.0";
 
 #if CONFIG_INAPPARENCY_OUTPUT_JSON
 constexpr serial::Format kFormat = serial::Format::Json;
@@ -225,9 +225,12 @@ platform::Oled g_oled;
 display::Framebuffer g_framebuffer;
 
 void display_task(void*) {
-    display::render_splash(g_framebuffer, kVersion);
+    display::render_splash_logo(g_framebuffer);
     g_oled.show(g_framebuffer);
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    vTaskDelay(pdMS_TO_TICKS(1500));
+    display::render_splash_name(g_framebuffer, kVersion);
+    g_oled.show(g_framebuffer);
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     std::uint32_t failures = 0;
     for (;;) {
@@ -352,7 +355,7 @@ std::uint32_t next_boot_count() {
 void print_banner() {
     esp_chip_info_t chip;
     esp_chip_info(&chip);
-    std::printf("\n  %s  inapparency %s\n\n", display::kLogo, kVersion);
+    std::printf("\n%s\n  inapparency %s\n\n", kBanner, kVersion);
     std::printf("target %s rev %u | %u core(s) | esp-idf %s | boot #%lu\n", CONFIG_IDF_TARGET,
                 static_cast<unsigned>(chip.revision), static_cast<unsigned>(chip.cores),
                 esp_get_idf_version(), static_cast<unsigned long>(g_boot_count));

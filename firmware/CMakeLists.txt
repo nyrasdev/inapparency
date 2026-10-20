@@ -9,5 +9,8 @@ set(EXTRA_COMPONENT_DIRS
     ${CMAKE_CURRENT_LIST_DIR}/../platform/espidf
 )
 
+# Shown in the app header that esptool and the bootloader print.
+file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/../VERSION" PROJECT_VER LIMIT_COUNT 1)
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(inapparency)

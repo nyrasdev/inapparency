@@ -9,6 +9,7 @@
 #include <string>
 
 #include "inapparency/display/screens.hpp"
+#include "inapparency/version.hpp"
 
 namespace {
 
@@ -68,9 +69,11 @@ int main(int argc, char** argv) {
         const char* name;
         Framebuffer fb;
     };
-    Screen screens[4] = {{"splash", {}}, {"status", {}}, {"alert", {}}, {"later", {}}};
+    Screen screens[5] = {
+        {"splash", {}}, {"splash-name", {}}, {"status", {}}, {"alert", {}}, {"later", {}}};
 
-    render_splash(screens[0].fb, "0.1.0");
+    render_splash_logo(screens[0].fb);
+    render_splash_name(screens[1].fb, kVersion);
 
     StatusView idle;
     idle.uptime_ms = 754'000;
@@ -79,7 +82,7 @@ int main(int argc, char** argv) {
     idle.hopping = true;
     idle.storage_enabled = true;
     idle.storage_ok = true;
-    render_status(screens[1].fb, idle);
+    render_status(screens[2].fb, idle);
 
     StatusView alert = idle;
     alert.uptime_ms = 3'723'000;
@@ -93,12 +96,12 @@ int main(int argc, char** argv) {
     a.bssid = MacAddress{{0x02, 0xee, 0xee, 0xee, 0xee, 0x01}};
     a.at_ms = 3'720'000;
     alert.last_alert = a;
-    render_status(screens[2].fb, alert);
+    render_status(screens[3].fb, alert);
 
     StatusView later = alert;
     later.uptime_ms = 3'900'000;
     later.storage_ok = false;
-    render_status(screens[3].fb, later);
+    render_status(screens[4].fb, later);
 
     for (const auto& s : screens) {
         print_text(s.name, s.fb);

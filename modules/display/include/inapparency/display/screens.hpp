@@ -6,12 +6,10 @@
 #include <optional>
 
 #include "inapparency/display/framebuffer.hpp"
+#include "inapparency/display/logo.hpp"
 #include "inapparency/event.hpp"
 
 namespace inapparency::display {
-
-// The project logo, drawn with the custom φ and ・ glyphs.
-inline constexpr const char* kLogo = "φ(・・;";
 
 struct LastAlert {
     Severity severity = Severity::Info;
@@ -39,7 +37,9 @@ struct StatusView {
 // How long a high or critical alert stays highlighted.
 inline constexpr std::uint64_t kHighlightMs = 10'000;
 
-void render_splash(Framebuffer& fb, const char* version);
+// Boot splash, in two frames: the logo, then the name and version.
+void render_splash_logo(Framebuffer& fb);
+void render_splash_name(Framebuffer& fb, const char* version);
 void render_status(Framebuffer& fb, const StatusView& view);
 
 // Short forms that fit on a 21-character line.

@@ -98,14 +98,14 @@ TEST(utf8_decoding) {
 }
 
 TEST(text_width_counts_characters_not_bytes) {
-    CHECK_EQ(Framebuffer::text_width(kLogo), 30); // 5 characters
-    CHECK_EQ(Framebuffer::text_width(kLogo, 3), 90);
+    CHECK_EQ(Framebuffer::text_width("\u03c6(\u30fb\u30fb;"), 30); // 5 characters
+    CHECK_EQ(Framebuffer::text_width("\u03c6(\u30fb\u30fb;", 3), 90);
     CHECK_EQ(Framebuffer::text_width("abc"), 18);
 }
 
-TEST(logo_glyphs_look_right) {
+TEST(extra_glyphs_look_right) {
     Framebuffer fb;
-    fb.draw_text(0, 0, kLogo);
+    fb.draw_text(0, 0, "\u03c6(\u30fb\u30fb;");
     // φ ( ・ ・ ; at 6 px per character, pixel for pixel.
     // clang-format off
     CHECK(ascii(fb, 0, 0, 30, 7) ==
@@ -130,16 +130,39 @@ TEST(logo_glyphs_look_right) {
     }
 }
 
-TEST(splash_draws_big_centered_logo) {
+TEST(splash_logo_is_centered_and_exact) {
     Framebuffer fb;
-    render_splash(fb, "0.1.0");
-    // Logo at 3x: 90 px wide starting at x=19, rows 8..28.
-    CHECK(fb.lit_pixels(19, 8, 90, 21) > 150);
-    CHECK_EQ(fb.lit_pixels(0, 8, 19, 21), 0U);
-    CHECK_EQ(fb.lit_pixels(109, 8, 19, 21), 0U);
-    // Name and version below it.
-    CHECK(fb.lit_pixels(0, 38, 128, 7) > 30);
-    CHECK(fb.lit_pixels(0, 52, 128, 7) > 30);
+    render_splash_logo(fb);
+    const Bitmap& logo = kLogoBitmap;
+    CHECK(logo.width <= Framebuffer::kWidth && logo.height <= Framebuffer::kHeight);
+    const int x0 = (Framebuffer::kWidth - logo.width) / 2;
+    const int y0 = (Framebuffer::kHeight - logo.height) / 2;
+    std::size_t lit = 0;
+    bool exact = true;
+    for (int y = 0; y < logo.height; ++y) {
+        for (int x = 0; x < logo.width; ++x) {
+            exact = exact && fb.get(x0 + x, y0 + y) == logo.get(x, y);
+            lit += logo.get(x, y) ? 1U : 0U;
+        }
+    }
+    CHECK(exact);
+    CHECK(lit > 200);                            // not blank
+    CHECK_EQ(fb.lit_pixels(0, 0, 128, 64), lit); // nothing outside it
+}
+
+TEST(splash_name_shows_text) {
+    Framebuffer fb;
+    render_splash_name(fb, "0.1.0");
+    CHECK(fb.lit_pixels(0, 18, 128, 7) > 30); // name
+    CHECK(fb.lit_pixels(0, 32, 128, 7) > 10); // version
+    CHECK(fb.lit_pixels(0, 46, 128, 7) > 30); // "passive monitor"
+}
+
+TEST(bitmap_bounds) {
+    const std::uint8_t data[] = {0x80, 0x01};
+    Bitmap b{8, 2, data};
+    CHECK(b.get(0, 0) && !b.get(1, 0) && b.get(7, 1));
+    CHECK(!b.get(-1, 0) && !b.get(8, 0) && !b.get(0, 2));
 }
 
 TEST(status_without_alert) {
@@ -148,7 +171,7 @@ TEST(status_without_alert) {
     CHECK(fb.lit_pixels(0, 9, 128, 1) == 128);  // header rule
     CHECK(fb.lit_pixels(0, 42, 128, 1) == 128); // alert box rule
     CHECK(fb.lit_pixels(0, 50, 128, 7) > 20);   // "no alerts yet"
-    CHECK_EQ(fb.lit_pixels(70, 0, 16, 8), 0U);  // no SD marker
+    CHECK_EQ(fb.lit_pixels(100, 0, 28, 8), 0U); // no SD marker
 }
 
 TEST(status_sd_marker) {
@@ -160,9 +183,9 @@ TEST(status_sd_marker) {
     render_status(ok_fb, v);
     v.storage_ok = false;
     render_status(bad_fb, v);
-    CHECK(ok_fb.lit_pixels(71, 0, 13, 8) > 0);
+    CHECK(ok_fb.lit_pixels(114, 0, 14, 8) > 0);
     // Inverted when the card has a problem: mostly lit.
-    CHECK(bad_fb.lit_pixels(71, 0, 13, 8) > ok_fb.lit_pixels(71, 0, 13, 8));
+    CHECK(bad_fb.lit_pixels(114, 0, 14, 8) > ok_fb.lit_pixels(114, 0, 14, 8));
 }
 
 TEST(status_fresh_high_alert_is_inverted_then_not) {

@@ -16,6 +16,7 @@
 #include "inapparency/event_gate.hpp"
 #include "inapparency/host/pcap.hpp"
 #include "inapparency/serial/format.hpp"
+#include "inapparency/version.hpp"
 
 namespace {
 
@@ -42,7 +43,8 @@ int usage() {
                  "  --json       print JSON lines instead of text\n"
                  "  --fcs        frames carry a 4-byte FCS (only for captures without radiotap)\n"
                  "  --no-status  skip the summary line at the end\n"
-                 "  --no-limit   print every event (no dedup or rate limit, unlike the board)\n");
+                 "  --no-limit   print every event (no dedup or rate limit, unlike the board)\n"
+                 "  --version    print the version\n");
     return 2;
 }
 
@@ -56,6 +58,10 @@ int main(int argc, char** argv) {
     const char* path = nullptr;
 
     for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--version") == 0) {
+            std::printf("inapparency-replay %s\n", kVersion);
+            return 0;
+        }
         if (std::strcmp(argv[i], "--json") == 0) {
             format = serial::Format::Json;
         } else if (std::strcmp(argv[i], "--fcs") == 0) {

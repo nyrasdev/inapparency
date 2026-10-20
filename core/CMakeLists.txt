@@ -13,9 +13,13 @@ set(INAPPARENCY_CORE_SOURCES
     src/rules/auth_flood.cpp
 )
 
+file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/../VERSION" INAPPARENCY_VERSION_STRING LIMIT_COUNT 1)
+
 # Inside an ESP-IDF build the core is pulled in as a regular component.
 if(ESP_PLATFORM)
     idf_component_register(SRCS ${INAPPARENCY_CORE_SOURCES} INCLUDE_DIRS include)
+    target_compile_definitions(${COMPONENT_LIB}
+        PUBLIC INAPPARENCY_VERSION="${INAPPARENCY_VERSION_STRING}")
     return()
 endif()
 
@@ -23,4 +27,5 @@ add_library(inapparency_core STATIC ${INAPPARENCY_CORE_SOURCES})
 add_library(inapparency::core ALIAS inapparency_core)
 target_include_directories(inapparency_core PUBLIC include)
 target_compile_features(inapparency_core PUBLIC cxx_std_20)
+target_compile_definitions(inapparency_core PUBLIC INAPPARENCY_VERSION="${INAPPARENCY_VERSION_STRING}")
 target_link_libraries(inapparency_core PRIVATE inapparency_warnings)

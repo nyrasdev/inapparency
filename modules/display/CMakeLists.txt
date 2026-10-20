@@ -1,7 +1,7 @@
 # Drawing and screen layouts for small monochrome displays. No hardware
 # access in here: the platform adapter just copies the framebuffer out.
 
-set(INAPPARENCY_DISPLAY_SOURCES src/font.cpp src/framebuffer.cpp src/screens.cpp)
+set(INAPPARENCY_DISPLAY_SOURCES src/font.cpp src/framebuffer.cpp src/logo.cpp src/screens.cpp)
 
 if(ESP_PLATFORM)
     idf_component_register(SRCS ${INAPPARENCY_DISPLAY_SOURCES} INCLUDE_DIRS include REQUIRES core)
