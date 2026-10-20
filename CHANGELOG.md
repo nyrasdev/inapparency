@@ -2,9 +2,8 @@
 
 ## 0.1.0
 
-First release. Everything is tested on synthetic traffic and compiles for
-four chips, but **none of it has run on a real board yet**, so treat this as
-a preview and please send hardware reports.
+First release. Tested on an ESP32 and on synthetic traffic, and builds for
+the ESP32, S3, C3 and C6. Hardware reports for the other chips are welcome.
 
 ### Detection
 - `deauth-burst`: deauth/disassoc floods, much more confident when a network

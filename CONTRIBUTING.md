@@ -5,11 +5,11 @@ and doc fixes are all welcome.
 
 ## The most useful thing right now
 
-**Run it on a real board and report back.** The firmware compiles for four
-chips, but radio behavior has to be checked on hardware. Use the
+**Run it on your board and report back**, especially on an ESP32-S3, C3 or
+C6. Use the
 [hardware report](https://github.com/nyrasdev/inapparency/issues/new?template=hardware_report.yml)
 template, even if everything just worked. See
-[supported hardware](docs/supported-hardware.md) for what to look at.
+[supported hardware](docs/supported-hardware.md) for the current list.
 
 ## Setting up
 

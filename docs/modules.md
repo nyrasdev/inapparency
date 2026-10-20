@@ -4,10 +4,6 @@ Both are **off by default** and switched on in `idf.py menuconfig` under
 **inapparency**. If a module isn't connected or fails, the firmware says so
 on serial and keeps monitoring without it.
 
-> [!NOTE]
-> Both modules compile for all four chips, but neither has been tried on a
-> real board yet. Report what happens, good or bad.
-
 ## OLED display
 
 Any 128x64 I2C OLED: the common 0.96" (SSD1306) or 1.3" (SH1106) modules.

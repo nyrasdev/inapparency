@@ -65,5 +65,5 @@ find core modules platform tools tests firmware -name '*.cpp' -o -name '*.hpp' |
 2. On GitHub: **Actions → release → Run workflow** on `main`.
 
 The workflow builds every firmware image and the Linux tools, then creates
-the `vx.y.z` tag and a pre-release with the changelog section as notes.
+the `vx.y.z` tag and a release with the changelog section as notes.
 Pushing a `vx.y.z` tag yourself does the same thing.

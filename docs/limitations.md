@@ -30,14 +30,6 @@ here so nobody mistakes it for more than it is.
   codes can't be read. That's expected, not an error.
 - The FCS (checksum) is stripped but not verified.
 
-## Firmware
-
-- Not yet run on a real board. It compiles for four chips, but radio
-  behavior is unverified. See [supported hardware](supported-hardware.md)
-  for what still needs checking.
-- Channel hopping undercounts: rules don't yet scale their thresholds by how
-  long each channel was watched.
-
 ## Detection
 
 - Thresholds are fixed numbers for now, not learned from your environment. A

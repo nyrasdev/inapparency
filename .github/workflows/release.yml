@@ -125,7 +125,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="v$(head -n1 VERSION)"
-          # Marked as a pre-release until it has been tested on real boards.
           # --target makes GitHub create the tag on this commit if it's new.
           gh release create "$tag" dist/* --target "$GITHUB_SHA" \
-            --title "inapparency $tag" --notes-file notes.md --prerelease
+            --title "inapparency $tag" --notes-file notes.md

@@ -145,12 +145,11 @@ docs/              rules, firmware, hardware status, limitations
 2. **Detection MVP**: rolling windows, deauth/disassoc bursts, malformed frames,
    structured events ✓
 3. **First ESP32 adapter**: ESP-IDF, promiscuous capture, serial output ✓
-   (compiles, waiting on a real board)
 4. **Reliability**: dedup, rate limiting, bounded everything ✓
    (10-minute soak test under hostile traffic)
-5. **More boards**: S3, C3, C6, and maybe C5 for 5 GHz (needs real boards)
-6. **Optional modules**: SD logging, OLED display ✓ (compiles, waiting on
-   real hardware)
+5. **More boards**: S3, C3, C6 builds ✓, hardware reports wanted, and maybe
+   C5 for 5 GHz
+6. **Optional modules**: SD logging, OLED display ✓
 7. **Smarter detection**: AP change tracking, evil twins, auth floods,
    correlating rules ✓ (learned baselines still to do)
 8. **Public release** ← *next*, plus learned baselines and probe-response
