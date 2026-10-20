@@ -22,6 +22,7 @@ const char* to_string(Severity severity);
 // high severity event can still have weak evidence behind it.
 struct DetectionEvent {
     std::uint32_t rule_id = 0;
+    const char* rule_name = "";
     std::uint64_t timestamp_ms = 0;
     std::uint32_t window_ms = 0;
 
