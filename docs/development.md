@@ -6,7 +6,8 @@
 - A C++20 compiler (GCC 12+ or Clang 15+)
 - clang-format 18 for formatting
 
-No ESP32 hardware is needed for anything in the repo yet.
+No ESP32 hardware is needed. The firmware needs ESP-IDF v5.4 to build
+([firmware.md](firmware.md)), everything else just needs CMake.
 
 ## Build options
 
@@ -15,6 +16,7 @@ No ESP32 hardware is needed for anything in the repo yet.
 | `INAPPARENCY_BUILD_TESTS` | on when top-level | builds `inapparency_tests` |
 | `INAPPARENCY_WERROR` | off | warnings become errors (CI turns it on) |
 | `INAPPARENCY_SANITIZE` | off | AddressSanitizer + UBSan |
+| `INAPPARENCY_BUILD_TOOLS` | on when top-level | builds `inapparency-replay` |
 
 ## Tests
 
@@ -31,10 +33,23 @@ They're synthetic byte buffers and never touch a real radio.
 When adding a parser or detection feature, add both the case that should
 trigger and the ordinary case that shouldn't.
 
+`ctest` also runs `replay_demo`: it generates the demo capture, replays it
+and checks that exactly the expected alerts come out.
+
+## Replaying captures
+
+```sh
+./build/tools/replay/inapparency-replay capture.pcap          # text
+./build/tools/replay/inapparency-replay --json capture.pcap   # JSON lines
+```
+
+Reads classic `.pcap` with radiotap (linktype 127) or plain 802.11
+(linktype 105). For pcapng, re-save as pcap in Wireshark first.
+
 ## Formatting
 
 ```sh
-find core tests -name '*.cpp' -o -name '*.hpp' | xargs clang-format -i
+find core modules platform tools tests firmware -name '*.cpp' -o -name '*.hpp' | xargs clang-format -i
 ```
 
 ## Core rules

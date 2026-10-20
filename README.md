@@ -9,9 +9,9 @@ tells you when something looks off and *why* it thinks so.
 It's defensive and passive. It listens, it doesn't transmit.
 
 > [!NOTE]
-> Early days. The portable core and the first detection rules work and are
-> tested on synthetic traffic. There's no firmware yet, so nothing has been
-> checked against a real radio. See the [roadmap](#roadmap).
+> Early days. The detection core works and is tested on synthetic traffic.
+> The firmware compiles for ESP32, S3, C3 and C6 but **hasn't run on a real
+> board yet**. See [supported hardware](docs/supported-hardware.md).
 
 ## What works today
 
@@ -31,8 +31,30 @@ It's defensive and passive. It listens, it doesn't transmit.
   severity separate from confidence
 - Fixed memory. The whole detector is about 11 KB, with no allocation while
   processing frames.
+- **Firmware** for ESP32 / S3 / C3 / C6: passive capture, channel hopping,
+  text or JSON output over serial ([docs](docs/firmware.md))
+- **Replay tool**: run any monitor-mode `.pcap` through the same detector on
+  your laptop
 - Builds and tests on any machine with CMake and a C++20 compiler. No board
   needed.
+
+## Try it without a board
+
+```sh
+cmake -S . -B build && cmake --build build -j
+python3 tools/make_demo_pcap.py demo.pcap
+./build/tools/replay/inapparency-replay demo.pcap
+```
+
+```
+[60.190] HIGH deauth-burst confidence=75 evidence=20/5000ms bssid=02:10:10:10:10:10 ch=6 | Unprotected deauth/disassoc burst on a network that requires PMF. The real access point would protect these, so they are likely forged.
+[70.450] LOW malformed-frames confidence=30 evidence=10/10000ms ch=6 | Lots of malformed or invalid frames in a short time. Could be a fuzzing tool, a buggy device or heavy interference.
+```
+
+The demo is a synthetic minute of normal apartment traffic, then a forged
+deauth flood and some broken frames. It also works with real captures: any
+Wi-Fi adapter that supports monitor mode plus `tcpdump` or Wireshark, saved
+as classic `.pcap`. Only capture networks you're allowed to.
 
 ## Build and test
 
@@ -54,21 +76,24 @@ More in [docs/development.md](docs/development.md).
 ## Layout
 
 ```
-core/      portable C++ core, no hardware or SDK code in here
-tests/     host tests and the synthetic frame builder
-docs/      architecture notes and known limitations
+core/              portable C++ core, no hardware or SDK code in here
+modules/serial/    event and status formatting (text / JSON lines)
+platform/espidf/   ESP-IDF radio adapter
+platform/host/     pcap + radiotap reader for laptops
+firmware/          ESP-IDF project tying it together
+tools/             replay tool and demo capture generator
+tests/             host tests and the synthetic frame builder
+docs/              rules, firmware, hardware status, limitations
 ```
-
-Board adapters (`platform/`) and optional outputs (`modules/`) show up once
-there's something real to put in them.
 
 ## Roadmap
 
 1. **Foundation**: types, parser, tests, CI ✓
 2. **Detection MVP**: rolling windows, deauth/disassoc bursts, malformed frames,
    structured events ✓
-3. **First ESP32 adapter**: ESP-IDF, promiscuous capture, serial output ← *next*
-4. **Reliability**: dedup, rate limiting, bounded everything
+3. **First ESP32 adapter**: ESP-IDF, promiscuous capture, serial output ✓
+   (compiles, waiting on a real board)
+4. **Reliability**: dedup, rate limiting, bounded everything ← *next*
 5. **More boards**: S3, C3, C6, and maybe C5 for 5 GHz
 6. **Optional modules**: storage, display, export
 7. **Smarter detection**: baselines, AP change tracking, correlating rules
