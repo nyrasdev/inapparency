@@ -10,6 +10,7 @@ add_executable(inapparency_tests
     unit/test_parser_more.cpp
     unit/test_event_gate.cpp
     unit/test_coverage.cpp
+    unit/test_ap_change.cpp
     unit/test_deauth_burst.cpp
     unit/test_malformed_frames.cpp
     integration/test_pipeline.cpp

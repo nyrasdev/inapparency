@@ -111,6 +111,9 @@ std::size_t format_event(const DetectionEvent& event, Format format, char* out,
         if (event.source && event.source != event.bssid) {
             w.add(" src=%s", event.source->to_string().data());
         }
+        if (event.related_bssid) {
+            w.add(" related=%s", event.related_bssid->to_string().data());
+        }
         if (event.channel) {
             w.add(" ch=%u", static_cast<unsigned>(*event.channel));
         }
@@ -132,6 +135,9 @@ std::size_t format_event(const DetectionEvent& event, Format format, char* out,
     }
     if (event.source) {
         w.add(",\"source\":\"%s\"", event.source->to_string().data());
+    }
+    if (event.related_bssid) {
+        w.add(",\"related_bssid\":\"%s\"", event.related_bssid->to_string().data());
     }
     if (event.channel) {
         w.add(",\"channel\":%u", static_cast<unsigned>(*event.channel));

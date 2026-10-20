@@ -3,9 +3,11 @@ set(INAPPARENCY_CORE_SOURCES
     src/parser.cpp
     src/detector.cpp
     src/event_gate.cpp
+    src/security.cpp
     src/channel_hopper.cpp
     src/rules/deauth_burst.cpp
     src/rules/malformed_frames.cpp
+    src/rules/ap_change.cpp
 )
 
 # Inside an ESP-IDF build the core is pulled in as a regular component.

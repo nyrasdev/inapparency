@@ -70,6 +70,10 @@ struct Ssid {
     std::string_view view() const;
     // Empty, or filled with zero bytes. Both are common ways to hide a name.
     bool is_hidden() const;
+
+    friend bool operator==(const Ssid& a, const Ssid& b) {
+        return a.length == b.length && a.view() == b.view();
+    }
 };
 
 // The parts of an RSN element that detection cares about.

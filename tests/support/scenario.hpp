@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <string_view>
 #include <vector>
 
 #include "frame_builder.hpp"
@@ -52,10 +53,12 @@ private:
 // A beacon from `ap`, optionally with an RSN element.
 enum class Security { Open, Wpa2NoPmf, Wpa2PmfOptional, Wpa3PmfRequired };
 
-inline std::vector<std::uint8_t> beacon(const MacAddress& ap, Security security,
-                                        std::uint8_t channel = 6) {
+inline std::vector<std::uint8_t> beacon_with(const MacAddress& ap, Security security,
+                                             std::uint8_t channel, std::string_view ssid,
+                                             std::uint16_t interval = 100) {
     FrameBuilder b(ManagementSubtype::Beacon);
-    b.transmitter(ap).bssid(ap).beacon_fixed().ssid("lab").element(3, {channel});
+    std::uint16_t capability = security == Security::Open ? 0x0401 : 0x0411;
+    b.transmitter(ap).bssid(ap).beacon_fixed(interval, capability).ssid(ssid).element(3, {channel});
 
     std::uint8_t akm = 2;
     std::uint16_t caps = 0;
@@ -82,6 +85,33 @@ inline std::vector<std::uint8_t> beacon(const MacAddress& ap, Security security,
                    lo, hi});                            // capabilities
     // clang-format on
     return b.build();
+}
+
+inline std::vector<std::uint8_t> beacon(const MacAddress& ap, Security security,
+                                        std::uint8_t channel = 6) {
+    return beacon_with(ap, security, channel, "lab");
+}
+
+inline std::vector<std::uint8_t> auth_request(const MacAddress& ap, const MacAddress& client) {
+    return FrameBuilder(ManagementSubtype::Authentication)
+        .receiver(ap)
+        .transmitter(client)
+        .bssid(ap)
+        .le16(0)
+        .le16(1)
+        .le16(0)
+        .build();
+}
+
+inline std::vector<std::uint8_t> assoc_request(const MacAddress& ap, const MacAddress& client) {
+    return FrameBuilder(ManagementSubtype::AssociationRequest)
+        .receiver(ap)
+        .transmitter(client)
+        .bssid(ap)
+        .le16(0x0431)
+        .le16(10)
+        .ssid("lab")
+        .build();
 }
 
 inline std::vector<std::uint8_t> deauth(const MacAddress& ap, const MacAddress& target,

@@ -33,6 +33,8 @@ struct DetectionEvent {
 
     std::optional<MacAddress> bssid;
     std::optional<MacAddress> source;
+    // Another BSSID involved, e.g. the real AP an evil twin imitates.
+    std::optional<MacAddress> related_bssid;
     std::optional<std::uint8_t> channel;
     // Set when the channel was only watched part of the time.
     std::optional<std::uint8_t> coverage_percent;
