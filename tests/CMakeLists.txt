@@ -17,12 +17,13 @@ add_executable(inapparency_tests
     unit/test_deauth_burst.cpp
     unit/test_malformed_frames.cpp
     unit/test_display.cpp
+    unit/test_storage.cpp
     integration/test_pipeline.cpp
     integration/test_soak.cpp
 )
 target_include_directories(inapparency_tests PRIVATE support)
 find_package(Threads REQUIRED)
-target_link_libraries(inapparency_tests PRIVATE inapparency::core inapparency::serial inapparency::host inapparency::display inapparency_warnings Threads::Threads)
+target_link_libraries(inapparency_tests PRIVATE inapparency::core inapparency::serial inapparency::host inapparency::display inapparency::storage inapparency_warnings Threads::Threads)
 
 add_test(NAME inapparency_tests COMMAND inapparency_tests)
 

@@ -28,6 +28,7 @@ endif()
 add_subdirectory(core)
 add_subdirectory(modules/serial)
 add_subdirectory(modules/display)
+add_subdirectory(modules/storage)
 
 if(INAPPARENCY_BUILD_TOOLS OR INAPPARENCY_BUILD_TESTS)
     add_subdirectory(platform/host)
