@@ -1,7 +1,11 @@
 name: release
 
-# Push a tag like v0.1.0 to build everything and publish a GitHub release.
+# Two ways to release:
+#  - Actions tab -> release -> "Run workflow" on main. The tag is taken from
+#    the VERSION file and created by GitHub when the release is published.
+#  - Or push a tag like v0.1.0 yourself.
 on:
+  workflow_dispatch:
   push:
     tags: ["v*"]
 
@@ -14,10 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: tag matches VERSION
+        if: github.event_name == 'push'
         run: |
           want="v$(head -n1 VERSION)"
           if [ "$GITHUB_REF_NAME" != "$want" ]; then
             echo "tag $GITHUB_REF_NAME doesn't match VERSION ($want)"; exit 1
+          fi
+      - name: started by hand from main
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [ "$GITHUB_REF_NAME" != main ]; then
+            echo "run the release from main, not $GITHUB_REF_NAME"; exit 1
           fi
       - name: changelog has this version
         run: grep -q "^## $(head -n1 VERSION)$" CHANGELOG.md
@@ -48,7 +59,7 @@ jobs:
         working-directory: firmware/out
         run: |
           . "$IDF_PATH/export.sh"
-          name="inapparency-${GITHUB_REF_NAME}-${{ matrix.target }}"
+          name="inapparency-v$(head -n1 ../../VERSION)-${{ matrix.target }}"
           if [ "${{ matrix.flavor }}" = full ]; then name="$name-oled-sd"; fi
           esptool.py --chip ${{ matrix.target }} merge_bin -o "$name.bin" @flash_args
           mkdir -p ../../dist && mv "$name.bin" ../../dist/
@@ -69,7 +80,7 @@ jobs:
           ctest --test-dir build --output-on-failure
       - name: package
         run: |
-          name="inapparency-tools-${GITHUB_REF_NAME}-linux-x86_64"
+          name="inapparency-tools-v$(head -n1 VERSION)-linux-x86_64"
           mkdir -p "$name" dist
           cp build/tools/replay/inapparency-replay \
              build/tools/display_preview/inapparency-display-preview \
@@ -113,6 +124,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          tag="v$(head -n1 VERSION)"
           # Marked as a pre-release until it has been tested on real boards.
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "inapparency $GITHUB_REF_NAME" --notes-file notes.md --prerelease
+          # --target makes GitHub create the tag on this commit if it's new.
+          gh release create "$tag" dist/* --target "$GITHUB_SHA" \
+            --title "inapparency $tag" --notes-file notes.md --prerelease

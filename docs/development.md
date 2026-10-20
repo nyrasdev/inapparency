@@ -58,3 +58,12 @@ find core modules platform tools tests firmware -name '*.cpp' -o -name '*.hpp' |
 - No allocation in the parse path. The parser only borrows the frame bytes.
 - Every length from a frame gets checked before it's used.
 - Missing metadata stays `std::nullopt`, never a made-up default.
+
+## Releasing
+
+1. Bump `VERSION` and add a matching `## x.y.z` section to `CHANGELOG.md`.
+2. On GitHub: **Actions → release → Run workflow** on `main`.
+
+The workflow builds every firmware image and the Linux tools, then creates
+the `vx.y.z` tag and a pre-release with the changelog section as notes.
+Pushing a `vx.y.z` tag yourself does the same thing.
