@@ -1,0 +1,37 @@
+menu "inapparency"
+
+    config INAPPARENCY_FIXED_CHANNEL
+        int "Fixed channel (0 = hop through the list below)"
+        range 0 14
+        default 0
+        help
+            Watching your own network? Set its channel here. A fixed channel
+            sees everything on it, hopping sees a slice of each channel.
+
+    config INAPPARENCY_HOP_CHANNELS
+        string "Channels to hop through"
+        default "1,6,11"
+        depends on INAPPARENCY_FIXED_CHANNEL = 0
+
+    config INAPPARENCY_HOP_DWELL_MS
+        int "Time on each channel (ms)"
+        range 50 60000
+        default 500
+        depends on INAPPARENCY_FIXED_CHANNEL = 0
+
+    config INAPPARENCY_STATUS_INTERVAL_S
+        int "Seconds between status lines (0 = off)"
+        range 0 3600
+        default 30
+
+    choice INAPPARENCY_OUTPUT
+        prompt "Serial output format"
+        default INAPPARENCY_OUTPUT_TEXT
+
+        config INAPPARENCY_OUTPUT_TEXT
+            bool "Readable text"
+        config INAPPARENCY_OUTPUT_JSON
+            bool "JSON lines"
+    endchoice
+
+endmenu

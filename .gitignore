@@ -6,3 +6,12 @@ compile_commands.json
 .DS_Store
 .vscode/
 .idea/
+
+# esp-idf
+firmware/build/
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/dependencies.lock
+firmware/managed_components/
+*.pcap
+!tests/fixtures/*.pcap
