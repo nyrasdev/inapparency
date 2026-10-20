@@ -7,9 +7,13 @@ add_executable(inapparency_tests
     unit/test_capture.cpp
     unit/test_serial_format.cpp
     unit/test_pcap.cpp
+    unit/test_parser_more.cpp
+    unit/test_event_gate.cpp
+    unit/test_coverage.cpp
     unit/test_deauth_burst.cpp
     unit/test_malformed_frames.cpp
     integration/test_pipeline.cpp
+    integration/test_soak.cpp
 )
 target_include_directories(inapparency_tests PRIVATE support)
 find_package(Threads REQUIRED)

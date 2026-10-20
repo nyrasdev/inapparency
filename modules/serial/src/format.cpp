@@ -114,6 +114,9 @@ std::size_t format_event(const DetectionEvent& event, Format format, char* out,
         if (event.channel) {
             w.add(" ch=%u", static_cast<unsigned>(*event.channel));
         }
+        if (event.coverage_percent) {
+            w.add(" coverage=%u%%", static_cast<unsigned>(*event.coverage_percent));
+        }
         w.add(" | %s", event.explanation);
         return w.finish();
     }
@@ -132,6 +135,9 @@ std::size_t format_event(const DetectionEvent& event, Format format, char* out,
     }
     if (event.channel) {
         w.add(",\"channel\":%u", static_cast<unsigned>(*event.channel));
+    }
+    if (event.coverage_percent) {
+        w.add(",\"coverage\":%u", static_cast<unsigned>(*event.coverage_percent));
     }
     w.add(",\"why\":");
     w.json_string(event.explanation);
@@ -161,6 +167,12 @@ std::size_t format_status(const Status& status, Format format, char* out, std::s
         if (status.min_free_heap) {
             w.add(" heap_min=%" PRIu32, *status.min_free_heap);
         }
+        if (status.stack_free) {
+            w.add(" stack_free=%" PRIu32, *status.stack_free);
+        }
+        if (status.suppressed) {
+            w.add(" suppressed=%" PRIu64, *status.suppressed);
+        }
         return w.finish();
     }
 
@@ -178,6 +190,12 @@ std::size_t format_status(const Status& status, Format format, char* out, std::s
     }
     if (status.min_free_heap) {
         w.add(",\"min_free_heap\":%" PRIu32, *status.min_free_heap);
+    }
+    if (status.stack_free) {
+        w.add(",\"stack_free\":%" PRIu32, *status.stack_free);
+    }
+    if (status.suppressed) {
+        w.add(",\"suppressed\":%" PRIu64, *status.suppressed);
     }
     w.add("}");
     return w.finish();

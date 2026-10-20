@@ -111,3 +111,19 @@ TEST(serial_status_lines) {
     format_status(bare, Format::Text, buf, sizeof buf);
     CHECK(has(std::string(buf), "frames=0"));
 }
+
+TEST(serial_coverage_and_suppressed) {
+    DetectionEvent e = sample_event();
+    e.coverage_percent = 33;
+    CHECK(has(text(e, Format::Text), "ch=6 coverage=33% |"));
+    CHECK(has(text(e, Format::Json), "\"coverage\":33,"));
+
+    Status s;
+    s.suppressed = 12;
+    s.stack_free = 2048;
+    char buf[512];
+    format_status(s, Format::Text, buf, sizeof buf);
+    CHECK(has(std::string(buf), "stack_free=2048 suppressed=12"));
+    format_status(s, Format::Json, buf, sizeof buf);
+    CHECK(has(std::string(buf), "\"stack_free\":2048,\"suppressed\":12}"));
+}

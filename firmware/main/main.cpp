@@ -11,6 +11,7 @@
 #include "freertos/task.h"
 #include "inapparency/channel_hopper.hpp"
 #include "inapparency/detector.hpp"
+#include "inapparency/event_gate.hpp"
 #include "inapparency/platform/capture.hpp"
 #include "inapparency/rules/deauth_burst.hpp"
 #include "inapparency/rules/malformed_frames.hpp"
@@ -51,6 +52,9 @@ public:
     }
 };
 
+SerialSink g_serial;
+EventGate g_gate(g_serial);
+
 void print_status() {
     serial::Status status;
     status.uptime_ms = now_ms();
@@ -62,6 +66,9 @@ void print_status() {
     }
     status.free_heap = esp_get_free_heap_size();
     status.min_free_heap = esp_get_minimum_free_heap_size();
+    status.suppressed = g_gate.stats().suppressed();
+    status.stack_free = static_cast<std::uint32_t>(uxTaskGetStackHighWaterMark(nullptr)) *
+                        static_cast<std::uint32_t>(sizeof(StackType_t));
 
     char line[384];
     serial::format_status(status, kFormat, line, sizeof line);
@@ -71,7 +78,6 @@ void print_status() {
 // Pulls frames off the ring and runs detection. The only task that touches
 // the detector, so it needs no locking.
 void processing_task(void*) {
-    SerialSink sink;
     const std::uint64_t status_every = CONFIG_INAPPARENCY_STATUS_INTERVAL_S * 1000ULL;
     std::uint64_t next_status = now_ms() + status_every;
 
@@ -79,7 +85,7 @@ void processing_task(void*) {
         Observation observation;
         int handled = 0;
         while (handled < 64 && g_ring.front(observation)) {
-            g_detector.process(observation, sink);
+            g_detector.process(observation, g_gate);
             g_ring.release();
             ++handled;
         }
@@ -116,8 +122,15 @@ bool configure_hopper() {
                     CONFIG_INAPPARENCY_HOP_CHANNELS);
         return false;
     }
-    std::printf("channel: hopping %s every %d ms\n", CONFIG_INAPPARENCY_HOP_CHANNELS,
-                CONFIG_INAPPARENCY_HOP_DWELL_MS);
+    // Each hopped channel is heard 1/N of the time. Rules use this to scale
+    // their thresholds instead of missing bursts.
+    auto coverage = static_cast<std::uint8_t>(100 / *count);
+    for (std::size_t i = 0; i < *count; ++i) {
+        g_detector.set_channel_coverage(list[i], coverage);
+    }
+    std::printf("channel: hopping %s every %d ms (%u%% coverage each)\n",
+                CONFIG_INAPPARENCY_HOP_CHANNELS, CONFIG_INAPPARENCY_HOP_DWELL_MS,
+                static_cast<unsigned>(coverage));
     return true;
 #endif
 }

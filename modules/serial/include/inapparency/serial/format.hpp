@@ -24,6 +24,10 @@ struct Status {
     std::optional<std::uint8_t> channel;
     std::optional<std::uint32_t> free_heap;
     std::optional<std::uint32_t> min_free_heap;
+    // Events held back by the event gate (duplicates + rate limited).
+    std::optional<std::uint64_t> suppressed;
+    // Smallest free stack seen on the detection task, in bytes.
+    std::optional<std::uint32_t> stack_free;
 };
 
 // Each function writes one line (ending in '\n') into `out`, always null

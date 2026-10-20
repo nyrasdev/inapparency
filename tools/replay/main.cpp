@@ -1,7 +1,7 @@
 // inapparency-replay: runs a monitor-mode capture through the same detector
 // the firmware uses and prints what it finds.
 //
-//   inapparency-replay [--json] [--fcs] [--no-status] capture.pcap
+//   inapparency-replay [--json] [--fcs] [--no-status] [--no-limit] capture.pcap
 
 #include <cstdio>
 #include <cstring>
@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "inapparency/detector.hpp"
+#include "inapparency/event_gate.hpp"
 #include "inapparency/host/pcap.hpp"
 #include "inapparency/rules/deauth_burst.hpp"
 #include "inapparency/rules/malformed_frames.hpp"
@@ -35,11 +36,13 @@ private:
 
 int usage() {
     std::fprintf(stderr,
-                 "usage: inapparency-replay [--json] [--fcs] [--no-status] capture.pcap\n"
+                 "usage: inapparency-replay [--json] [--fcs] [--no-status] [--no-limit] "
+                 "capture.pcap\n"
                  "\n"
                  "  --json       print JSON lines instead of text\n"
                  "  --fcs        frames carry a 4-byte FCS (only for captures without radiotap)\n"
-                 "  --no-status  skip the summary line at the end\n");
+                 "  --no-status  skip the summary line at the end\n"
+                 "  --no-limit   print every event (no dedup or rate limit, unlike the board)\n");
     return 2;
 }
 
@@ -49,6 +52,7 @@ int main(int argc, char** argv) {
     serial::Format format = serial::Format::Text;
     bool assume_fcs = false;
     bool status = true;
+    bool limit = true;
     const char* path = nullptr;
 
     for (int i = 1; i < argc; ++i) {
@@ -58,6 +62,8 @@ int main(int argc, char** argv) {
             assume_fcs = true;
         } else if (std::strcmp(argv[i], "--no-status") == 0) {
             status = false;
+        } else if (std::strcmp(argv[i], "--no-limit") == 0) {
+            limit = false;
         } else if (argv[i][0] == '-' || path != nullptr) {
             return usage();
         } else {
@@ -88,7 +94,9 @@ int main(int argc, char** argv) {
     Detector detector;
     detector.add_rule(deauth_rule);
     detector.add_rule(malformed_rule);
-    PrintSink sink(format);
+    PrintSink printer(format);
+    EventGate gate(printer);
+    EventSink& sink = limit ? static_cast<EventSink&>(gate) : printer;
 
     std::uint64_t first_ms = 0;
     std::uint64_t last_ms = 0;
@@ -115,6 +123,9 @@ int main(int argc, char** argv) {
         serial::Status s;
         s.uptime_ms = last_ms;
         s.stats = &detector.stats();
+        if (limit) {
+            s.suppressed = gate.stats().suppressed();
+        }
         char line[512];
         serial::format_status(s, format, line, sizeof line);
         std::fputs(line, stdout);
