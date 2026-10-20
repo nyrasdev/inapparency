@@ -31,7 +31,8 @@ struct EventGateStats {
 // BSSIDs) from drowning the serial line.
 //
 // Nothing disappears silently: everything held back is counted, and the
-// status line reports it.
+// status line reports it. Critical events are deduplicated but never rate
+// limited.
 class EventGate final : public EventSink {
 public:
     static constexpr std::size_t kRecent = 16;

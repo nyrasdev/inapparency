@@ -3,6 +3,7 @@ set(INAPPARENCY_CORE_SOURCES
     src/parser.cpp
     src/detector.cpp
     src/event_gate.cpp
+    src/correlator.cpp
     src/security.cpp
     src/channel_hopper.cpp
     src/rules/deauth_burst.cpp

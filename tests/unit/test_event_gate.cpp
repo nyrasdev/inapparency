@@ -126,3 +126,17 @@ TEST(gate_invalid_config) {
     CHECK_EQ(gate.config().max_per_minute, EventGateConfig{}.max_per_minute);
     CHECK(!EventGate(out).config_rejected());
 }
+
+TEST(gate_critical_skips_rate_limit_but_not_dedup) {
+    CollectingSink out;
+    EventGate gate(out);
+    for (std::uint32_t i = 0; i < 50; ++i) {
+        gate.emit(event(1, 0, ap(i))); // budget gone
+    }
+    DetectionEvent chain = event(100, 0, kAccessPoint);
+    chain.severity = Severity::Critical;
+    gate.emit(chain);
+    CHECK(out.events.back().rule_id == 100U);
+    gate.emit(chain);
+    CHECK_EQ(gate.stats().duplicates, 1U);
+}

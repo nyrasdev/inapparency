@@ -13,6 +13,7 @@ add_executable(inapparency_tests
     unit/test_ap_change.cpp
     unit/test_evil_twin.cpp
     unit/test_auth_flood.cpp
+    unit/test_correlator.cpp
     unit/test_deauth_burst.cpp
     unit/test_malformed_frames.cpp
     integration/test_pipeline.cpp

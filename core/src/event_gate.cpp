@@ -87,7 +87,9 @@ void EventGate::emit(const DetectionEvent& event) {
         ++stats_.duplicates;
         return;
     }
-    if (!take_token(event.timestamp_ms)) {
+    // Critical events (attack chains) are rare by construction and the one
+    // thing that must get out during a flood, so they skip the budget.
+    if (event.severity != Severity::Critical && !take_token(event.timestamp_ms)) {
         ++stats_.rate_limited;
         return;
     }
