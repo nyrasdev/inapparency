@@ -34,6 +34,8 @@ struct DetectionEvent {
     std::optional<MacAddress> bssid;
     std::optional<MacAddress> source;
     std::optional<std::uint8_t> channel;
+    // Set when the channel was only watched part of the time.
+    std::optional<std::uint8_t> coverage_percent;
 
     // Static text written by the rule, explaining what tripped it. Never
     // points into frame data.

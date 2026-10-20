@@ -36,6 +36,11 @@ public:
 
     void process(const Observation& observation, EventSink& sink);
 
+    // See DetectionContext::coverage(). Set before frames start arriving.
+    void set_channel_coverage(std::uint8_t channel, std::uint8_t percent) {
+        context_.set_coverage(channel, percent);
+    }
+
     const DetectorStats& stats() const { return stats_; }
     const DetectionContext& context() const { return context_; }
 

@@ -15,6 +15,9 @@ struct DeauthBurstConfig {
     std::uint32_t threshold = 20;
     // After firing for a BSSID, stay quiet about it this long.
     std::uint32_t cooldown_ms = 30000;
+    // While hopping, the threshold shrinks with channel coverage, but never
+    // below this.
+    std::uint32_t min_threshold = 5;
 
     bool valid() const;
 };
@@ -26,6 +29,10 @@ struct DeauthBurstConfig {
 // the same reason code, or (most of all) when the network requires PMF but
 // the frames aren't protected. A real access point with PMF on would protect
 // them, so unprotected ones are very likely forged.
+//
+// When the channel is only watched part of the time, the threshold is scaled
+// down to match (a third of the time on channel, a third of the frames), and
+// confidence drops a little because less was actually seen.
 class DeauthBurstRule final : public Rule {
 public:
     static constexpr std::uint32_t kId = 1;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <optional>
 
@@ -39,8 +40,29 @@ public:
 
     void learn(const Observation& observation, const ParseResult& result);
 
+    // Share of time (0-100 %) the radio listens on a channel. While hopping
+    // across three channels each gets about 33 %, so a rule sees about a
+    // third of what happens there. Unknown or unset channels count as 100.
+    std::uint8_t coverage(std::optional<std::uint8_t> channel) const {
+        if (!channel || *channel >= coverage_.size()) {
+            return 100;
+        }
+        return coverage_[*channel];
+    }
+    // Values outside 1-100 are ignored.
+    void set_coverage(std::uint8_t channel, std::uint8_t percent) {
+        if (channel < coverage_.size() && percent >= 1 && percent <= 100) {
+            coverage_[channel] = percent;
+        }
+    }
+
 private:
     MacTable<NetworkRecord, kNetworkCapacity> networks_;
+    std::array<std::uint8_t, 15> coverage_ = [] {
+        std::array<std::uint8_t, 15> a{};
+        a.fill(100);
+        return a;
+    }();
 };
 
 } // namespace inapparency

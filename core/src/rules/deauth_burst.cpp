@@ -21,6 +21,7 @@ constexpr int kSameReasonBonus = 5;
 constexpr int kUnprotectedOnPmfBonus = 25;
 constexpr int kMixedOnPmfBonus = 10;
 constexpr int kProtectedOnPmfPenalty = 25;
+constexpr int kPartialCoveragePenalty = 5;
 constexpr int kMinConfidence = 5;
 constexpr int kMaxConfidence = 95; // a threshold is never proof
 
@@ -46,7 +47,8 @@ constexpr const char* kUnknownNetwork =
 } // namespace
 
 bool DeauthBurstConfig::valid() const {
-    return threshold > 0 && window_ms >= 20 && window_ms <= kMaxWindowMs;
+    return threshold > 0 && window_ms >= 20 && window_ms <= kMaxWindowMs && min_threshold > 0 &&
+           min_threshold <= threshold;
 }
 
 DeauthBurstRule::DeauthBurstRule(const DeauthBurstConfig& config) : config_(config) {
@@ -138,8 +140,19 @@ void DeauthBurstRule::evaluate(const Observation& observation, const ParseResult
     }
     state.last_transmitter = frame.transmitter();
 
+    const std::uint8_t coverage = context.coverage(observation.channel);
+    std::uint32_t threshold = config_.threshold;
+    if (coverage < 100) {
+        std::uint64_t scaled =
+            (static_cast<std::uint64_t>(config_.threshold) * coverage + 99) / 100;
+        threshold = static_cast<std::uint32_t>(scaled);
+        if (threshold < config_.min_threshold) {
+            threshold = config_.min_threshold;
+        }
+    }
+
     const std::uint32_t count = state.all.total(now);
-    if (count < config_.threshold) {
+    if (count < threshold) {
         return;
     }
     if (state.has_fired && now < state.quiet_until_ms) {
@@ -151,14 +164,16 @@ void DeauthBurstRule::evaluate(const Observation& observation, const ParseResult
     const std::uint32_t targets = distinct_targets(state, now);
 
     int confidence = kBaseConfidence;
-    std::uint64_t extra =
-        static_cast<std::uint64_t>(count - config_.threshold) * 10U / config_.threshold;
+    std::uint64_t extra = static_cast<std::uint64_t>(count - threshold) * 10U / threshold;
     confidence += static_cast<int>(std::min<std::uint64_t>(kMaxVolumeBonus, extra));
     if (broadcast > 0 || targets >= 3) {
         confidence += kSpreadBonus;
     }
-    if (state.same_reason_streak >= config_.threshold) {
+    if (state.same_reason_streak >= threshold) {
         confidence += kSameReasonBonus;
+    }
+    if (coverage < 100) {
+        confidence -= kPartialCoveragePenalty;
     }
 
     const char* explanation = kUnknownNetwork;
@@ -194,6 +209,9 @@ void DeauthBurstRule::evaluate(const Observation& observation, const ParseResult
     event.source = state.last_transmitter;
     event.channel = observation.channel;
     event.explanation = explanation;
+    if (coverage < 100) {
+        event.coverage_percent = coverage;
+    }
 
     state.has_fired = true;
     state.quiet_until_ms = now + config_.cooldown_ms;
