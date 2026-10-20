@@ -9,6 +9,7 @@ compile_commands.json
 
 # esp-idf
 firmware/build/
+firmware/build-*/
 firmware/sdkconfig
 firmware/sdkconfig.old
 firmware/dependencies.lock

@@ -34,4 +34,106 @@ menu "inapparency"
             bool "JSON lines"
     endchoice
 
+    menuconfig INAPPARENCY_DISPLAY
+        bool "OLED display (128x64, I2C)"
+        default n
+        help
+            Shows live status and the last alert on a small OLED. If the
+            screen isn't found at boot, monitoring carries on without it.
+
+    if INAPPARENCY_DISPLAY
+
+        choice INAPPARENCY_DISPLAY_CONTROLLER
+            prompt "Controller"
+            default INAPPARENCY_DISPLAY_SSD1306
+            help
+                Most 0.96" modules are SSD1306, most 1.3" ones are SH1106.
+                If the picture is shifted by two pixels, it's the other one.
+
+            config INAPPARENCY_DISPLAY_SSD1306
+                bool "SSD1306"
+            config INAPPARENCY_DISPLAY_SH1106
+                bool "SH1106"
+        endchoice
+
+        config INAPPARENCY_DISPLAY_SDA
+            int "SDA GPIO"
+            default 21 if IDF_TARGET_ESP32
+            default 8 if IDF_TARGET_ESP32S3
+            default 4 if IDF_TARGET_ESP32C3
+            default 6
+
+        config INAPPARENCY_DISPLAY_SCL
+            int "SCL GPIO"
+            default 22 if IDF_TARGET_ESP32
+            default 9 if IDF_TARGET_ESP32S3
+            default 5 if IDF_TARGET_ESP32C3
+            default 7
+
+        config INAPPARENCY_DISPLAY_ADDRESS
+            hex "I2C address"
+            range 0x3C 0x3D
+            default 0x3C
+
+        config INAPPARENCY_DISPLAY_ROTATE
+            bool "Rotate 180 degrees"
+            default n
+
+    endif
+
+    menuconfig INAPPARENCY_STORAGE
+        bool "Log alerts to a microSD card (SPI)"
+        default n
+        help
+            Appends every alert, plus a status line every few minutes, to
+            /sdcard/inapp.log as JSON lines. The card must already be FAT
+            formatted; it is never formatted automatically.
+
+    if INAPPARENCY_STORAGE
+
+        config INAPPARENCY_SD_MOSI
+            int "MOSI GPIO"
+            default 23 if IDF_TARGET_ESP32
+            default 11 if IDF_TARGET_ESP32S3
+            default 7 if IDF_TARGET_ESP32C3
+            default 18
+
+        config INAPPARENCY_SD_MISO
+            int "MISO GPIO"
+            default 19 if IDF_TARGET_ESP32
+            default 13 if IDF_TARGET_ESP32S3
+            default 1 if IDF_TARGET_ESP32C3
+            default 20
+
+        config INAPPARENCY_SD_SCK
+            int "SCK GPIO"
+            default 18 if IDF_TARGET_ESP32
+            default 12 if IDF_TARGET_ESP32S3
+            default 6 if IDF_TARGET_ESP32C3
+            default 19
+
+        config INAPPARENCY_SD_CS
+            int "CS GPIO"
+            default 5 if IDF_TARGET_ESP32
+            default 10 if IDF_TARGET_ESP32S3
+            default 10 if IDF_TARGET_ESP32C3
+            default 21
+
+        config INAPPARENCY_LOG_MAX_KB
+            int "Rotate the log after (KB)"
+            range 4 65536
+            default 512
+
+        config INAPPARENCY_LOG_KEEP
+            int "Old log files to keep"
+            range 0 9
+            default 2
+
+        config INAPPARENCY_LOG_STATUS_INTERVAL_S
+            int "Seconds between status lines in the log (0 = off)"
+            range 0 86400
+            default 300
+
+    endif
+
 endmenu

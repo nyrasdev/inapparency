@@ -1,0 +1,4 @@
+# Everything optional switched on. CI builds this to make sure the modules
+# keep compiling on every chip.
+CONFIG_INAPPARENCY_DISPLAY=y
+CONFIG_INAPPARENCY_STORAGE=y
