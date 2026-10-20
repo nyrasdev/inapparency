@@ -6,8 +6,11 @@ them as a radiotap .pcap:
 
   0-60 s   an ordinary apartment: three access points beaconing, phones
            probing, a client leaving now and then
-  60-63 s  a flood of forged, unprotected deauths against the WPA3 network
+  55 s     an open copy of the WPA3 network "home" starts beaconing (evil twin)
+  60-63 s  a flood of forged, unprotected deauths against the real "home",
+           to push its clients onto the copy (attack chain)
   70-71 s  a burst of malformed frames
+  80-83 s  an authentication flood against the neighbor's access point
 
     python3 tools/make_demo_pcap.py demo.pcap
 """
@@ -20,9 +23,10 @@ HOME = bytes.fromhex("021010101010")
 NEIGHBOR = bytes.fromhex("022020202020")
 CAFE = bytes.fromhex("023030303030")
 CLIENT = bytes.fromhex("02aabbccddee")
+TWIN = bytes.fromhex("02eeeeeeee01")
 BROADCAST = b"\xff" * 6
 
-DEAUTH, DISASSOC, BEACON, PROBE_REQ = 12, 10, 8, 4
+DEAUTH, DISASSOC, BEACON, PROBE_REQ, AUTH = 12, 10, 8, 4, 11
 
 
 def radiotap(channel_mhz, signal_dbm):
@@ -55,7 +59,9 @@ def rsn(akm, caps):
 
 
 def beacon(bssid, ssid, security, seq):
-    body = b"\x00" * 8 + struct.pack("<HH", 100, 0x0411)
+    # Capability: ESS, short slot, and the privacy bit only if protected.
+    capability = 0x0401 if security == "open" else 0x0411
+    body = b"\x00" * 8 + struct.pack("<HH", 100, capability)
     body += element(0, ssid.encode()) + element(3, b"\x06")
     if security == "wpa3":
         body += rsn(8, 0x00C0)
@@ -82,6 +88,10 @@ def main(path):
             packets.append(((t_ms + 40) * 1000,
                             mgmt(DISASSOC, NEIGHBOR, CLIENT, NEIGHBOR, seq, struct.pack("<H", 8))))
 
+    # Evil twin: same name as the WPA3 network, but open.
+    for t_ms in range(55_000, 85_000, 100):
+        packets.append(((t_ms + 50) * 1000, beacon(TWIN, "home", "open", t_ms // 100)))
+
     # Forged deauths: unprotected, broadcast, same reason, on a network that
     # requires PMF. A real WPA3 access point would never send these.
     for i in range(300):
@@ -91,6 +101,12 @@ def main(path):
     # Malformed: deauths cut off before their reason code.
     for i in range(15):
         packets.append(((70_000 + i * 50) * 1000, mgmt(DEAUTH, CLIENT, CAFE, CAFE, i, b"\x07")))
+
+    # Auth flood against the neighbor from random spoofed addresses.
+    for i in range(300):
+        fake = bytes([0x02] + [rng.randrange(256) for _ in range(5)])
+        body = struct.pack("<HHH", 0, 1, 0)  # open system, client's first frame
+        packets.append(((80_000 + i * 10) * 1000, mgmt(AUTH, NEIGHBOR, fake, NEIGHBOR, i, body)))
 
     packets.sort(key=lambda p: p[0])
     with open(path, "wb") as f:

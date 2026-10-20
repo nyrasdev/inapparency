@@ -13,8 +13,13 @@ if(NOT replay_result EQUAL 0)
     message(FATAL_ERROR "replay exited with ${replay_result}")
 endif()
 
-foreach(expected "HIGH deauth-burst confidence=75" "bssid=02:10:10:10:10:10"
-                 "requires PMF" "LOW malformed-frames" "events=2")
+foreach(expected "HIGH evil-twin confidence=85 evidence=3"
+                 "bssid=02:ee:ee:ee:ee:01 related=02:10:10:10:10:10"
+                 "HIGH deauth-burst confidence=75" "requires PMF"
+                 "CRITICAL attack-chain confidence=95"
+                 "LOW malformed-frames"
+                 "MEDIUM auth-flood confidence=55 evidence=50/5000ms bssid=02:20:20:20:20:20"
+                 "events=4" "suppressed=0")
     string(FIND "${out}" "${expected}" found)
     if(found EQUAL -1)
         message(FATAL_ERROR "expected \"${expected}\" in replay output")

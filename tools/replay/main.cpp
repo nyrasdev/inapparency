@@ -10,11 +10,11 @@
 #include <string>
 #include <vector>
 
+#include "inapparency/correlator.hpp"
+#include "inapparency/default_rules.hpp"
 #include "inapparency/detector.hpp"
 #include "inapparency/event_gate.hpp"
 #include "inapparency/host/pcap.hpp"
-#include "inapparency/rules/deauth_burst.hpp"
-#include "inapparency/rules/malformed_frames.hpp"
 #include "inapparency/serial/format.hpp"
 
 namespace {
@@ -89,14 +89,13 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    rules::DeauthBurstRule deauth_rule;
-    rules::MalformedFramesRule malformed_rule;
+    DefaultRules rule_set;
     Detector detector;
-    detector.add_rule(deauth_rule);
-    detector.add_rule(malformed_rule);
+    rule_set.attach(detector);
     PrintSink printer(format);
     EventGate gate(printer);
-    EventSink& sink = limit ? static_cast<EventSink&>(gate) : printer;
+    Correlator correlator(limit ? static_cast<EventSink&>(gate) : printer);
+    EventSink& sink = correlator;
 
     std::uint64_t first_ms = 0;
     std::uint64_t last_ms = 0;

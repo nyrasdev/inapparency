@@ -10,11 +10,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "inapparency/channel_hopper.hpp"
+#include "inapparency/correlator.hpp"
+#include "inapparency/default_rules.hpp"
 #include "inapparency/detector.hpp"
 #include "inapparency/event_gate.hpp"
 #include "inapparency/platform/capture.hpp"
-#include "inapparency/rules/deauth_burst.hpp"
-#include "inapparency/rules/malformed_frames.hpp"
 #include "inapparency/serial/format.hpp"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
@@ -34,8 +34,7 @@ constexpr serial::Format kFormat = serial::Format::Text;
 // Everything lives in static storage: no heap use after boot.
 platform::FrameRing g_ring;
 Detector g_detector;
-rules::DeauthBurstRule g_deauth_rule;
-rules::MalformedFramesRule g_malformed_rule;
+DefaultRules g_rules;
 ChannelHopper g_hopper;
 std::atomic<std::uint8_t> g_channel{0};
 
@@ -54,6 +53,8 @@ public:
 
 SerialSink g_serial;
 EventGate g_gate(g_serial);
+// detector -> correlator -> gate -> serial
+Correlator g_correlator(g_gate);
 
 void print_status() {
     serial::Status status;
@@ -85,7 +86,7 @@ void processing_task(void*) {
         Observation observation;
         int handled = 0;
         while (handled < 64 && g_ring.front(observation)) {
-            g_detector.process(observation, g_gate);
+            g_detector.process(observation, g_correlator);
             g_ring.release();
             ++handled;
         }
@@ -156,9 +157,12 @@ extern "C" void app_main() {
         halt("nvs init failed", err);
     }
 
-    g_detector.add_rule(g_deauth_rule);
-    g_detector.add_rule(g_malformed_rule);
-    std::printf("rules: %s, %s\n", g_deauth_rule.info().name, g_malformed_rule.info().name);
+    if (!g_rules.attach(g_detector)) {
+        halt("too many rules for the detector", ESP_ERR_NO_MEM);
+    }
+    std::printf("rules: %s, %s, %s, %s, %s + attack-chain\n", g_rules.deauth_burst.info().name,
+                g_rules.malformed_frames.info().name, g_rules.ap_change.info().name,
+                g_rules.evil_twin.info().name, g_rules.auth_flood.info().name);
 
     if (!configure_hopper()) {
         halt("channel config", ESP_ERR_INVALID_ARG);

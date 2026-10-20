@@ -5,9 +5,9 @@
 #include <chrono>
 
 #include "check.hpp"
+#include "inapparency/correlator.hpp"
+#include "inapparency/default_rules.hpp"
 #include "inapparency/event_gate.hpp"
-#include "inapparency/rules/deauth_burst.hpp"
-#include "inapparency/rules/malformed_frames.hpp"
 #include "scenario.hpp"
 
 using namespace inapparency;
@@ -35,17 +35,16 @@ MacAddress random_ap(XorShift& rng, std::uint32_t pool) {
 } // namespace
 
 TEST(soak_ten_minutes_of_chaos) {
-    rules::DeauthBurstRule deauth_rule;
-    rules::MalformedFramesRule malformed_rule;
+    DefaultRules rule_set;
     Detector detector;
-    detector.add_rule(deauth_rule);
-    detector.add_rule(malformed_rule);
+    CHECK(rule_set.attach(detector));
     for (std::uint8_t ch : {std::uint8_t{1}, std::uint8_t{6}, std::uint8_t{11}}) {
         detector.set_channel_coverage(ch, 33);
     }
 
     CollectingSink out;
     EventGate gate(out);
+    Correlator correlator(gate);
     XorShift rng{0xC0FFEE};
 
     std::uint64_t frames = 0;
@@ -80,10 +79,20 @@ TEST(soak_ten_minutes_of_chaos) {
                 b = rng.byte();
             }
             break;
+        case 9: // join attempts from random addresses
+            bytes = auth_request(random_ap(rng, 4), mac(0x02, rng.byte(), rng.byte(), rng.byte(),
+                                                        rng.byte(), rng.byte()));
+            break;
         case 7: // truncated management frames
             bytes = deauth(kAccessPoint, kClient);
             bytes.resize(rng.next() % bytes.size());
             break;
+        case 8:
+            if (rng.next() % 2 == 0) { // open copies of the APs with random names
+                bytes = beacon_with(random_ap(rng, 500), Security::Open, *obs.channel, "lab");
+                break;
+            }
+            [[fallthrough]];
         default: // ordinary probe requests
             bytes = FrameBuilder(ManagementSubtype::ProbeRequest).ssid("").build();
             break;
@@ -93,7 +102,7 @@ TEST(soak_ten_minutes_of_chaos) {
             obs.timestamp_ms -= 2000;
         }
         obs.bytes = bytes;
-        detector.process(obs, gate);
+        detector.process(obs, correlator);
         ++frames;
     }
 
@@ -109,12 +118,18 @@ TEST(soak_ten_minutes_of_chaos) {
     CHECK_EQ(stats.ok + stats.empty + stats.truncated + stats.bad_version + stats.unsupported,
              frames);
 
-    // Every event the rules produced is either printed or counted.
-    CHECK_EQ(g.passed + g.duplicates + g.rate_limited, stats.events);
+    // Every event (from rules, plus attack chains) is either printed or counted.
+    CHECK_EQ(g.passed + g.duplicates + g.rate_limited, stats.events + correlator.chains());
     CHECK_EQ(out.events.size(), g.passed);
 
-    // Output stays inside the budget: 5 burst + 20/min for 10 minutes.
-    CHECK(g.passed <= 5 + 20 * 10 + 1);
+    // Output stays inside the budget: 5 burst + 20/min for 10 minutes, plus
+    // critical chains (which skip the budget but are capped per target).
+    std::uint64_t critical = 0;
+    for (const auto& e : out.events) {
+        critical += e.severity == Severity::Critical ? 1U : 0U;
+    }
+    CHECK(g.passed - critical <= 5 + 20 * 10 + 1);
+    CHECK(critical <= 4 * 2 + 300); // each target at most once per 5 min
     CHECK(g.passed > 0);
     CHECK(g.rate_limited + g.duplicates > 0);
 

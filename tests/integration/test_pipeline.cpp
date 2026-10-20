@@ -2,6 +2,8 @@
 // ordinary traffic, then an attack.
 
 #include "check.hpp"
+#include "inapparency/correlator.hpp"
+#include "inapparency/default_rules.hpp"
 #include "inapparency/rules/deauth_burst.hpp"
 #include "inapparency/rules/malformed_frames.hpp"
 #include "scenario.hpp"
@@ -130,4 +132,43 @@ TEST(pipeline_duplicate_rule_ids_rejected) {
     Detector d;
     CHECK(d.add_rule(a));
     CHECK(!d.add_rule(b));
+}
+
+TEST(pipeline_all_rules_quiet_on_ordinary_traffic) {
+    // A busy but harmless hour-long slice: a mesh with three nodes, a
+    // neighbor, a cafe hotspot, phones probing and joining, clients leaving.
+    DefaultRules rule_set;
+    Detector detector;
+    CHECK(rule_set.attach(detector));
+    CollectingSink out;
+    Correlator correlator(out);
+    const MacAddress mesh[] = {kHome, mac(0x02, 0x10, 0x10, 0x10, 0x10, 0x11),
+                               mac(0x02, 0x10, 0x10, 0x10, 0x10, 0x12)};
+
+    auto feed = [&](const std::vector<std::uint8_t>& bytes, std::uint64_t t) {
+        Observation obs;
+        obs.timestamp_ms = t;
+        obs.bytes = bytes;
+        obs.channel = 6;
+        detector.process(obs, correlator);
+    };
+    for (std::uint64_t t = 0; t < 600'000; t += 100) {
+        for (std::uint8_t i = 0; i < 3; ++i) {
+            feed(beacon_with(mesh[i], Security::Wpa3PmfRequired,
+                             static_cast<std::uint8_t>(1 + 5 * i), "home"),
+                 t + i);
+        }
+        feed(beacon_with(kNeighbor, Security::Wpa2NoPmf, 6, "neighbor"), t + 30);
+        feed(beacon_with(kCafe, Security::Open, 6, "cafe-free-wifi"), t + 60);
+        if (t % 3000 == 0) {
+            auto phone = mac(0x02, 0x55, 0x55, 0x00, static_cast<std::uint8_t>(t >> 16),
+                             static_cast<std::uint8_t>(t >> 8));
+            feed(auth_request(kCafe, phone), t + 70);
+            feed(assoc_request(kCafe, phone), t + 75);
+        }
+        if (t % 20'000 == 0) {
+            feed(disassoc(kNeighbor, kClient, 8), t + 80);
+        }
+    }
+    CHECK(out.events.empty());
 }
