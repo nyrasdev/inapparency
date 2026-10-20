@@ -29,6 +29,10 @@ It's defensive and passive. It listens, it doesn't transmit.
   - `malformed-frames`: floods of broken management frames
 - Every alert says why it fired, how much evidence there was, and keeps
   severity separate from confidence
+- Alerts get deduplicated and rate-limited, and anything held back is
+  counted. Thresholds adjust while channel hopping.
+- Parses all management frame types (beacons, probes, auth, association,
+  deauth, action)
 - Fixed memory. The whole detector is about 11 KB, with no allocation while
   processing frames.
 - **Firmware** for ESP32 / S3 / C3 / C6: passive capture, channel hopping,
@@ -93,9 +97,10 @@ docs/              rules, firmware, hardware status, limitations
    structured events ✓
 3. **First ESP32 adapter**: ESP-IDF, promiscuous capture, serial output ✓
    (compiles, waiting on a real board)
-4. **Reliability**: dedup, rate limiting, bounded everything ← *next*
-5. **More boards**: S3, C3, C6, and maybe C5 for 5 GHz
-6. **Optional modules**: storage, display, export
+4. **Reliability**: dedup, rate limiting, bounded everything ✓
+   (10-minute soak test under hostile traffic)
+5. **More boards**: S3, C3, C6, and maybe C5 for 5 GHz (needs real boards)
+6. **Optional modules**: storage, display, export ← *next*
 7. **Smarter detection**: baselines, AP change tracking, correlating rules
 8. **Public release**
 

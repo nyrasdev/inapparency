@@ -20,10 +20,10 @@ Measured from the v0.1 firmware with default settings:
 
 | Chip | App binary | Static RAM used |
 |---|---|---|
-| ESP32 | 524 KB | 57 KB of 177 KB DRAM |
-| ESP32-S3 | 516 KB | 122 KB of 334 KB |
-| ESP32-C3 | 531 KB | 123 KB of 314 KB |
-| ESP32-C6 | 566 KB | 155 KB of 442 KB |
+| ESP32 | 525 KB | 57 KB of 177 KB DRAM |
+| ESP32-S3 | 518 KB | 122 KB of 334 KB |
+| ESP32-C3 | 533 KB | 123 KB of 314 KB |
+| ESP32-C6 | 568 KB | 155 KB of 442 KB |
 
 Most of that is the Wi-Fi driver. inapparency itself takes about 28 KB of
 RAM: the capture queue (~17 KB) and the detector with its rules (~11 KB).

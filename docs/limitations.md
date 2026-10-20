@@ -13,6 +13,14 @@ here so nobody mistakes it for more than it is.
 - Distance, walls, antenna placement and interference all drop frames.
 - Corrupted frames are usually filtered out by the radio before the software
   ever sees them.
+- **Neighboring channels leak.** 2.4 GHz channels overlap, so a radio on
+  channel 6 also hears some frames sent on 5 or 7. Frames are tagged with
+  the channel the radio was on, not always the one they were sent on.
+- **Coverage is an average.** Hopping coverage assumes equal time per
+  channel. The real share can differ slightly, and bursts shorter than one
+  hop cycle can be missed entirely.
+- Signal strength (RSSI) varies a lot between boards and antennas, so it
+  isn't used for detection yet.
 
 ## Frames
 
@@ -38,6 +46,12 @@ here so nobody mistakes it for more than it is.
   learned PMF state). In very crowded places older ones get replaced.
 - PMF status comes from beacons. Until a network's beacon is heard, its PMF
   status is unknown and alerts say so.
+
+## Output
+
+- The event gate rate-limits output. During a big flood some events are
+  held back. They're counted in `suppressed=` on the status line, never
+  silently lost.
 
 ## Conclusions
 

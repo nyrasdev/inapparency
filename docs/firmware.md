@@ -41,14 +41,17 @@ bursts get undercounted.
 inapparency 0.1.0 | target esp32 rev 3 | 2 core(s) | esp-idf v5.4.1
 passive mode: listening only, nothing is transmitted
 rules: deauth-burst, malformed-frames
-channel: hopping 1,6,11 every 500 ms
+channel: hopping 1,6,11 every 500 ms (33% coverage each)
 monitoring started
-[30.000] status frames=2841 ok=2830 unsupported=0 truncated=11 ... dropped=0 queue_peak=3 ch=6 heap=187420 heap_min=186904
-[61.204] HIGH deauth-burst confidence=75 evidence=20/5000ms bssid=... ch=6 | Unprotected deauth/disassoc burst on a network that requires PMF. ...
+[30.000] status frames=2841 ok=2830 ... dropped=0 queue_peak=3 ch=6 heap=187420 heap_min=186904 stack_free=3120 suppressed=0
+[61.204] HIGH deauth-burst confidence=70 evidence=7/5000ms bssid=... ch=6 coverage=33% | Unprotected deauth/disassoc burst on a network that requires PMF. ...
 ```
 
-`dropped` above 0 means frames came in faster than detection could handle
-them. Worth reporting with your board model.
+Worth reporting, with your board model:
+
+- `dropped` above 0: frames came in faster than detection could handle them
+- `heap_min` going down over hours: something is leaking
+- `stack_free` under ~500: the detection task needs a bigger stack
 
 ## How it's put together
 
@@ -65,5 +68,6 @@ CaptureRing (32 × 512 B)
 main task                  channel hopper, moves the radio every N ms
 ```
 
+Events go through the event gate (dedup + rate limit) before being printed.
 Everything is allocated statically at boot. Nothing in the frame path uses
 the heap.

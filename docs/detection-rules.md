@@ -11,6 +11,25 @@ proof.
 Rules see every frame, keep fixed-size state, and go quiet for a cooldown
 after firing so one long attack doesn't turn into thousands of events.
 
+## Event gate
+
+Everything rules emit passes through an event gate before it's printed:
+
+- **Duplicates**: the same rule for the same BSSID within 10 s is dropped.
+- **Rate limit**: at most 5 back to back, then 20 per minute on average. This
+  stops an attacker spoofing thousands of BSSIDs from flooding the output.
+
+Nothing is dropped silently. Both counts go into `suppressed=` on the status
+line. The replay tool has `--no-limit` to see everything.
+
+## Channel coverage
+
+While hopping, a channel is only heard part of the time (3 channels → about
+33 % each). Rules that count frames scale their thresholds by that share, so
+an attack that's only partly heard still gets caught. These events carry
+`coverage=33%` and lose a few confidence points, because less was actually
+seen.
+
 ---
 
 ## 1. `deauth-burst`
@@ -25,6 +44,7 @@ the window.
 | `window_ms` | 5000 |
 | `threshold` | 20 frames |
 | `cooldown_ms` | 30000 |
+| `min_threshold` | 5 frames (floor when scaled for coverage) |
 
 **Confidence** starts at 35 when the threshold is crossed, then:
 
@@ -36,6 +56,7 @@ the window.
 | Network requires PMF, at least half the frames unprotected | **+25** |
 | Network requires PMF, some frames unprotected | +10 |
 | Network requires PMF, all frames protected | **−25** |
+| Channel only partly watched (hopping) | −5 |
 
 The PMF check is the strongest signal. When a network requires PMF (WPA3
 does), the real access point protects its deauth frames. An unprotected one
@@ -55,8 +76,9 @@ beacon saying otherwise doesn't erase it, because beacons can be forged too.
 **Known gaps**
 
 - Only tracks 16 networks at once. Older ones get replaced.
-- Counts are per channel actually heard. While channel hopping, a burst on
-  another channel can be missed or undercounted.
+- While hopping, the threshold is scaled from an average. A short burst
+  that lands entirely while the radio is on another channel is still
+  missed.
 - An attacker sending under 20 frames per 5 s stays below the default
   threshold.
 
