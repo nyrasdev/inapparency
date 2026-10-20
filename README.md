@@ -10,8 +10,8 @@ It's defensive and passive. It listens, it doesn't transmit.
 
 > [!NOTE]
 > Early days. The detection core works and is tested on synthetic traffic.
-> The firmware compiles for ESP32, S3, C3 and C6 but **hasn't run on a real
-> board yet**. See [supported hardware](docs/supported-hardware.md).
+> The firmware compiles for ESP32, S3, C3 and C6.
+>  See [supported hardware](docs/supported-hardware.md).
 
 ## What works today
 
